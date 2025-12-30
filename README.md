@@ -1,4 +1,4 @@
-[![Typing SVG](https://readme-typing-svg.herokuapp.com?color=%2336BCF7&lines=Arcade)](https://git.io/typing-svg)
+[![Typing SVG](https://readme-typing-svg.herokuapp.com?color=%2336BCF7&lines=Arcade)]([https://git.io/typing-svg](https://github.com/WsB2107/Arcade))
 
 # Dungeon Crushers
 
