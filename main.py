@@ -1,5 +1,6 @@
 from config import *
 from levels import *
+from classes import *
 import arcade
 class Main(arcade.Window):
     def __init__(self, width, height, title):
