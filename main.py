@@ -1,5 +1,6 @@
 from config import *
 from levels import *
+from classes import *
 import arcade
 from LoginView import Login
 
