@@ -4,6 +4,7 @@ import arcade
 from pyglet.graphics import Batch
 from arcade import Camera2D
 
+
 class TestView(arcade.View):
     def __init__(self):
         super().__init__()
@@ -39,7 +40,6 @@ class TestView(arcade.View):
         self.gui_caemra.use()
         self.batch.draw()
 
-
     def on_update(self, delta_time):
         self.player.change_y -= GRAVITY
         move = 0
@@ -63,7 +63,6 @@ class TestView(arcade.View):
         if want_jump:
             can_coyote = (self.time_since_ground <= COYOTE_TIME)
             if grounded or can_coyote:
-                # Просим движок прыгнуть: он корректно задаст начальную вертикальную скорость
                 self.engine.jump(JUMP_SPEED)
                 self.jump_buffer_timer = 0
 
@@ -75,10 +74,11 @@ class TestView(arcade.View):
         half_w = self.world_camera.viewport_width / 2
         half_h = self.world_camera.viewport_height / 2
 
-        world_w = 2500
-        world_h = 1100
-        cam_x = max(half_w, min(world_w - half_w, smooth[0]))
-        cam_y = max(half_h, min(world_h - half_h, smooth[1]))
+        self.all_sprites.update_animation(delta_time)
+
+
+        cam_x = max(half_w, min(WORLD_W - half_w, smooth[0]))
+        cam_y = max(half_h, min(WORLD_H- half_h, smooth[1]))
 
         self.world_camera.position = (cam_x, cam_y)
         self.gui_caemra.position = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
@@ -92,13 +92,18 @@ class TestView(arcade.View):
             self.left = True
         elif key == arcade.key.D:
             self.right = True
-        elif key == arcade.key.SPACE:
+        if key == arcade.key.W:
             self.jump_pressed = True
             self.jump_buffer_timer = JUMP_BUFFER
         if key == arcade.key.ESCAPE:
             self.window.close()
         if key == arcade.key.F11:
             self.window.set_fullscreen(not self.window.fullscreen)
+        if key == arcade.key.SPACE:
+            # Запускаем атаку, если она еще не идет
+            if not self.player.is_attacking:
+                self.player.is_attacking = True
+                self.player.cur_texture = 0  # Сбрасываем счетчик, чтобы начать с 1-го кадра
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W:
@@ -109,8 +114,6 @@ class TestView(arcade.View):
             self.left = False
         elif key == arcade.key.D:
             self.right = False
-        elif key == arcade.key.SPACE:
+        if key == arcade.key.W:
             self.jump_pressed = False
             self.jump_buffer_timer = JUMP_BUFFER
-
-

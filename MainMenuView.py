@@ -1,4 +1,5 @@
 import arcade
+from levels import *
 from arcade.gui import UIManager, UIAnchorLayout, UIBoxLayout, UILabel, UIFlatButton
 
 class MainMenu(arcade.View):
@@ -73,7 +74,8 @@ class MainMenu(arcade.View):
         if self.start_button and self.start_button.rect:
             rect = self.start_button.rect
             if rect.left <= x <= rect.right and rect.bottom <= y <= rect.top:
-                #переход в игру
+                game_view = TestView()
+                self.window.show_view(game_view)
                 return
         if self.settings_button and self.settings_button.rect:
             rect = self.settings_button.rect
