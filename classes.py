@@ -17,6 +17,8 @@ class Player(arcade.Sprite):
         self.attack_textures = []
         self.jump_texture_pair = []  # Для прыжка
 
+        self.already_hit = []  # Список врагов, которых мы уже ударили за текущую атаку
+
         # Загрузка IDLE (8 кадров)
         for i in range(8):
             texture = arcade.load_texture(f"textures/Warrior_IDLE{i + 1}.png")
@@ -75,3 +77,33 @@ class Player(arcade.Sprite):
         self.cur_texture += delta_time * 10
         frame = int(self.cur_texture) % 8
         self.texture = self.idle_textures[frame][self.character_face_direction]
+class Enemy(arcade.Sprite):
+    def __init__(self, x, y, collision_list, platforms_list):
+        super().__init__("textures/test.jpg", 1)
+        self.center_x = x
+        self.center_y = y
+        self.collision_list = collision_list
+        self.platforms_list = platforms_list
+        # Личный движок врага
+        self.enemy_engine = arcade.PhysicsEnginePlatformer(
+            self,
+            walls=self.collision_list,
+            platforms=self.platforms_list,
+            gravity_constant= GRAVITY
+        )
+        self.hp =3
+
+    def update(self, delta_time: float = 1/60):
+
+        # Враг сам обновляет свою физику
+        self.enemy_engine.update()
+        self.change_x *= 0.9  # Умножение на 0.9 плавно гасит скорость быстрее
+
+        # Если скорость стала совсем маленькой — обнуляем
+        if abs(self.change_x) < 0.1:
+            self.change_x = 0
+
+    def on_update(self, delta_time):
+        # Враг сам обновляет свою физику
+        self.enemy_engine.update()
+
