@@ -1,22 +1,24 @@
-from classes import *
 from config import *
 import arcade
 from pyglet.graphics import Batch
 from arcade import Camera2D
 
 
+# уровень 1 - Шахты
 class Mines(arcade.View):
     def __init__(self):
         super().__init__()
         arcade.set_background_color(arcade.color.BLUE_YONDER)
+        # игрок и спрайтлисты
         self.player = Player(480, 2800)
         self.enemies_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
         self.all_sprites.append(self.player)
 
         self.tile_map = arcade.load_tilemap("level_1.tmx",
-                                            scaling=1.0)  # Во встроенных ресурсах есть даже уровни!
+                                            scaling=1.0)
 
+        # слои карты, scene не подойдет для декораций
         self.sky_list = self.tile_map.sprite_lists["sky"]
         self.grass_list = self.tile_map.sprite_lists["grass"]
         self.trees_list = self.tile_map.sprite_lists["trees"]
@@ -30,21 +32,25 @@ class Mines(arcade.View):
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
         self.dekor_list = self.tile_map.sprite_lists["dekor"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
+
+        # координаты врагов
         for enemy_point in self.tile_map.object_lists.get("enemies", []):
-            # Берем координаты из Tiled
             world_x = enemy_point.shape[0]
             world_y = enemy_point.shape[1]
             # print(world_x, world_y)
 
-            # Создаем объект врага
+            # объект врага
             enemy = Enemy(world_x, world_y, self.collision_list, self.platforms_list)
             self.enemies_list.append(enemy)
 
+        # статы игрока
         self.left = self.right = self.up = self.down = self.jump_pressed = False
         self.jump_buffer_timer = 0
         self.time_since_ground = 999.0
         self.jumps_left = MAX_JUMPS
         self.score = 0
+
+        # камера
         self.batch = Batch()
         self.world_camera = Camera2D()
         self.gui_caemra = Camera2D()
@@ -61,7 +67,7 @@ class Mines(arcade.View):
         self.clear()
         self.world_camera.use()
 
-        # 1. Сначала рисуем задние слои
+        # рисуем задние слои
         self.sky_list.draw()
         self.grass_list.draw()
         self.backgr_list.draw()
@@ -71,18 +77,17 @@ class Mines(arcade.View):
         self.dekor1_list.draw()
         self.dekor2_list.draw()
 
-        # 2. Рисуем основные слои
+        # основные слои
         self.stone_list.draw()
         self.stone_ground_list.draw()
         self.platforms_list.draw()
         self.collision_list.draw()
 
-        # 4. РИСУЕМ ГЕРОЯ
+        # игрок и враги
         self.all_sprites.draw()
-
         self.enemies_list.draw()
 
-        # декорации должны быть ПЕРЕД игроком
+        # декорации перед игроком
         self.dekor_list.draw()
 
         # GUI
@@ -90,14 +95,17 @@ class Mines(arcade.View):
         self.batch.draw()
 
     def on_update(self, delta_time):
+
+        # движение игрока
         move = 0
         if self.left and not self.right:
             move = -PLAYER_MOVE_SPEED
         elif self.right and not self.left:
             move = PLAYER_MOVE_SPEED
         self.player.change_x = move
-        # Прыжок: can_jump() + койот + буфер
-        grounded = self.engine.can_jump(y_distance=6)  # Есть пол под ногами?
+
+        # крутой прыжок
+        grounded = self.engine.can_jump(y_distance=6)
         if grounded:
             self.time_since_ground = 0
             self.jumps_left = MAX_JUMPS
@@ -111,17 +119,19 @@ class Mines(arcade.View):
         if want_jump:
             can_coyote = (self.time_since_ground <= COYOTE_TIME)
             if grounded or can_coyote:
-                # Просим движок прыгнуть: он корректно задаст начальную вертикальную скорость
                 self.engine.jump(JUMP_SPEED)
                 self.jump_buffer_timer = 0
 
+        # движок
         self.engine.update()
 
+        # обновление врагов и боевку
         for enemy in self.enemies_list:
             enemy.update_enemy(self.player)
-        self.update_combat()
-        # self.enemies_list.update()
 
+        self.update_combat()
+
+        # камера
         target = (self.player.center_x, self.player.center_y)
         cx, cy = self.world_camera.position
         smooth = (cx + (target[0] - cx) * CAMERA_LERP,
@@ -139,94 +149,90 @@ class Mines(arcade.View):
 
         self.world_camera.position = (cam_x, cam_y)
         self.gui_caemra.position = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-        for enemy in self.enemies_list:
-            enemy.update_enemy(self.player)
-        self.update_combat()
-        self.enemies_list.update()  # Чтобы враги могли отлетать при ударе
+
+        # экран смерти
         if self.player.hp <= 0:
             self.game_over()
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.W:
             self.up = True
-        elif key == arcade.key.S:
-            self.down = True
+            self.jump_pressed = True
+            self.jump_buffer_timer = JUMP_BUFFER
         elif key == arcade.key.A:
             self.left = True
         elif key == arcade.key.D:
             self.right = True
-        if key == arcade.key.W:
-            self.jump_pressed = True
-            self.jump_buffer_timer = JUMP_BUFFER
+        # чтобы падать быстрее
+        elif key == arcade.key.S:
+            self.down = True
         if key == arcade.key.ESCAPE:
             self.window.close()
+
         if key == arcade.key.F11:
             self.window.set_fullscreen(not self.window.fullscreen)
+
         if key == arcade.key.SPACE:
-            # Запускаем атаку, если она еще не идет
             if not self.player.is_attacking:
                 self.player.is_attacking = True
-                self.player.cur_texture = 0  # Сбрасываем счетчик, чтобы начать с 1 кадра
-                self.player.already_hit = []  # Очищаем список при новом ударе
+
+                # сбрасываем счетчик и список при каждом ударе
+                self.player.cur_texture = 0
+                self.player.already_hit = []
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W:
             self.up = False
+            self.jump_pressed = False
+            self.jump_buffer_timer = JUMP_BUFFER
         elif key == arcade.key.S:
             self.down = False
         elif key == arcade.key.A:
             self.left = False
         elif key == arcade.key.D:
             self.right = False
-        if key == arcade.key.W:
-            self.jump_pressed = False
-            self.jump_buffer_timer = JUMP_BUFFER
 
     def update_combat(self):
-        # Проверяем атаку только на определенном кадре анимации (например, на 2-м или 3-м)
-        # Это делает боевку "честной": урон наносится, когда меч визуально опускается
+
+        # считаем фреймы, чтобы вся анимация атаки не наносила урон
         frame = int(self.player.cur_texture)
 
         if self.player.is_attacking and frame in [2, 3]:
-            # Создаем невидимый хитбокс атаки перед игроком
-            # Смещаем его влево или вправо в зависимости от того, куда смотрит герой
-            # hitbox_dist = 50 if self.player.character_face_direction == 0 else -50
-
-            # Ищем врагов, которые попали в зону удара
             hit_list = arcade.check_for_collision_with_list(self.player, self.enemies_list)
 
-            # Если мы хотим более точный удар (чуть впереди игрока),
-            # можно использовать get_sprites_at_point или создать временный спрайт-хитбокс
-
+            # враги которым еще не нанесли урон
             for enemy in hit_list:
                 if enemy not in self.player.already_hit:
-                    # Определяем направление отбрасывания
-                    direction = 1 if self.player.character_face_direction == 0 else -1
+                    # направление отбрасывания
+                    direction = 1 if self.player.direction_view == 0 else -1
 
-                    # Наносим урон и передаем направление
-                    enemy.take_damage(1, direction)
+                    # нанесение урона
+                    enemy.take_damage(direction)
 
+                    # чтобы враг не получил больше 1 урона за тычку
                     self.player.already_hit.append(enemy)
 
     def game_over(self):
-        print("Игра окончена!")
-        # Здесь можно перезапустить уровень или вернуть в меню
-        game_view = Mines()  # Перезапуск
+        game_view = Mines()
         self.window.show_view(game_view)
 
 
+# уровень 2 - Катакомбы
 class Catacombs(arcade.View):
     def __init__(self):
         super().__init__()
         arcade.set_background_color(arcade.color.EERIE_BLACK)
+
+        # игрок и спрайты
         self.player = Player(128, 2800)
         self.enemies_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
         self.all_sprites.append(self.player)
 
         self.tile_map = arcade.load_tilemap("level_2.tmx",
-                                            scaling=1.0)  # Во встроенных ресурсах есть даже уровни!
+                                            scaling=1.0)
 
+        # слои карты
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
         self.back2_list = self.tile_map.sprite_lists["back2"]
         self.back1_list = self.tile_map.sprite_lists["back1"]
@@ -239,21 +245,24 @@ class Catacombs(arcade.View):
         self.dekor_list = self.tile_map.sprite_lists["dekor"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
+        # координаты врагов
         for enemy_point in self.tile_map.object_lists.get("enemies", []):
-            # Берем координаты из Tiled
             world_x = enemy_point.shape[0]
             world_y = enemy_point.shape[1]
             # print(world_x, world_y)
 
-            # Создаем объект врага
+            # объект врага
             enemy = Enemy(world_x, world_y, self.collision_list, self.platforms_list)
             self.enemies_list.append(enemy)
 
+        # статы игрока
         self.left = self.right = self.up = self.down = self.jump_pressed = False
         self.jump_buffer_timer = 0
         self.time_since_ground = 999.0
         self.jumps_left = MAX_JUMPS
         self.score = 0
+
+        # камера
         self.batch = Batch()
         self.world_camera = Camera2D()
         self.gui_caemra = Camera2D()
@@ -270,7 +279,7 @@ class Catacombs(arcade.View):
         self.clear()
         self.world_camera.use()
 
-        # 1. Сначала рисуем задние слои
+        # рисуем задние слои
         self.backgr_list.draw()
         self.back2_list.draw()
         self.back1_list.draw()
@@ -278,18 +287,17 @@ class Catacombs(arcade.View):
         self.dekor2_list.draw()
         self.dekor1_list.draw()
 
-        # 2. Рисуем основные слои
+        # основные слои
         self.stone_list.draw()
         self.collision_stone_list.draw()
         self.platforms_list.draw()
         self.collision_list.draw()
 
-        # 4. РИСУЕМ ГЕРОЯ
+        # игрок и враги
         self.all_sprites.draw()
-
         self.enemies_list.draw()
 
-        # декорации должны быть ПЕРЕД игроком
+        # декорации перед игроком
         self.dekor_list.draw()
 
         # GUI
@@ -297,14 +305,17 @@ class Catacombs(arcade.View):
         self.batch.draw()
 
     def on_update(self, delta_time):
+
+        # движение игрока
         move = 0
         if self.left and not self.right:
             move = -PLAYER_MOVE_SPEED
         elif self.right and not self.left:
             move = PLAYER_MOVE_SPEED
         self.player.change_x = move
-        # Прыжок: can_jump() + койот + буфер
-        grounded = self.engine.can_jump(y_distance=6)  # Есть пол под ногами?
+
+        # крутой прыжок
+        grounded = self.engine.can_jump(y_distance=6)
         if grounded:
             self.time_since_ground = 0
             self.jumps_left = MAX_JUMPS
@@ -318,17 +329,19 @@ class Catacombs(arcade.View):
         if want_jump:
             can_coyote = (self.time_since_ground <= COYOTE_TIME)
             if grounded or can_coyote:
-                # Просим движок прыгнуть: он корректно задаст начальную вертикальную скорость
                 self.engine.jump(JUMP_SPEED)
                 self.jump_buffer_timer = 0
 
+        # движок
         self.engine.update()
 
+        # обновление врагов и боевку
         for enemy in self.enemies_list:
             enemy.update_enemy(self.player)
-        self.update_combat()
-        # self.enemies_list.update()
 
+        self.update_combat()
+
+        # камера
         target = (self.player.center_x, self.player.center_y)
         cx, cy = self.world_camera.position
         smooth = (cx + (target[0] - cx) * CAMERA_LERP,
@@ -346,79 +359,71 @@ class Catacombs(arcade.View):
 
         self.world_camera.position = (cam_x, cam_y)
         self.gui_caemra.position = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-        for enemy in self.enemies_list:
-            enemy.update_enemy(self.player)
-        self.update_combat()
-        self.enemies_list.update()  # Чтобы враги могли отлетать при ударе
+
+        # экран смерти
         if self.player.hp <= 0:
             self.game_over()
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.W:
             self.up = True
-        elif key == arcade.key.S:
-            self.down = True
+            self.jump_pressed = True
+            self.jump_buffer_timer = JUMP_BUFFER
         elif key == arcade.key.A:
             self.left = True
         elif key == arcade.key.D:
             self.right = True
-        if key == arcade.key.W:
-            self.jump_pressed = True
-            self.jump_buffer_timer = JUMP_BUFFER
+        # чтобы падать быстрее
+        elif key == arcade.key.S:
+            self.down = True
         if key == arcade.key.ESCAPE:
             self.window.close()
+
         if key == arcade.key.F11:
             self.window.set_fullscreen(not self.window.fullscreen)
+
         if key == arcade.key.SPACE:
-            # Запускаем атаку, если она еще не идет
             if not self.player.is_attacking:
                 self.player.is_attacking = True
-                self.player.cur_texture = 0  # Сбрасываем счетчик, чтобы начать с 1 кадра
-                self.player.already_hit = []  # Очищаем список при новом ударе
+
+                # сбрасываем счетчик и список при каждом ударе
+                self.player.cur_texture = 0
+                self.player.already_hit = []
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W:
             self.up = False
+            self.jump_pressed = False
+            self.jump_buffer_timer = JUMP_BUFFER
         elif key == arcade.key.S:
             self.down = False
         elif key == arcade.key.A:
             self.left = False
         elif key == arcade.key.D:
             self.right = False
-        if key == arcade.key.W:
-            self.jump_pressed = False
-            self.jump_buffer_timer = JUMP_BUFFER
 
     def update_combat(self):
-        # Проверяем атаку только на определенном кадре анимации (например, на 2-м или 3-м)
-        # Это делает боевку "честной": урон наносится, когда меч визуально опускается
+
+        # считаем фреймы, чтобы вся анимация атаки не наносила урон
         frame = int(self.player.cur_texture)
 
         if self.player.is_attacking and frame in [2, 3]:
-            # Создаем невидимый хитбокс атаки перед игроком
-            # Смещаем его влево или вправо в зависимости от того, куда смотрит герой
-            # hitbox_dist = 50 if self.player.character_face_direction == 0 else -50
-
-            # Ищем врагов, которые попали в зону удара
             hit_list = arcade.check_for_collision_with_list(self.player, self.enemies_list)
 
-            # Если мы хотим более точный удар (чуть впереди игрока),
-            # можно использовать get_sprites_at_point или создать временный спрайт-хитбокс
-
+            # враги которым еще не нанесли урон
             for enemy in hit_list:
                 if enemy not in self.player.already_hit:
-                    # Определяем направление отбрасывания
-                    direction = 1 if self.player.character_face_direction == 0 else -1
+                    # направление отбрасывания
+                    direction = 1 if self.player.direction_view == 0 else -1
 
-                    # Наносим урон и передаем направление
-                    enemy.take_damage(1, direction)
+                    # нанесение урона
+                    enemy.take_damage(direction)
 
+                    # чтобы враг не получил больше 1 урона за тычку
                     self.player.already_hit.append(enemy)
 
     def game_over(self):
-        print("Игра окончена!")
-        # Здесь можно перезапустить уровень или вернуть в меню
-        game_view = Catacombs()  # Перезапуск
+        game_view = Catacombs()
         self.window.show_view(game_view)
 
 
@@ -427,89 +432,101 @@ class Player(arcade.Sprite):
         super().__init__(scale=0.5)
 
         self.cur_texture = 0
-        self.character_face_direction = 0
-        self.is_attacking = False  # Флаг атаки
+        self.direction_view = 0
 
-        # Списки текстур
+        # флаг атаки
+        self.is_attacking = False
+
+        # списки текстур
         self.idle_textures = []
         self.run_textures = []
         self.attack_textures = []
-        self.jump_texture_pair = []  # Для прыжка
+        self.jump_texture = []
 
-        self.already_hit = []  # Список врагов, которых мы уже ударили за текущую атаку
-        self.hp = 5
-        self.invulnerability_timer = 0  # Таймер неуязвимости после удара
+        # список врагов, которых мы уже ударили за текущую атаку
+        self.already_hit = []
 
-        # Загрузка IDLE (8 кадров)
+        self.hp = 5  # хп игрока
+        self.take_damage_timer = 0  # таймер неуязвимости после получения урона
+
+        # загрузка IDLE
         for i in range(8):
             texture = arcade.load_texture(f"textures/Warrior_IDLE{i + 1}.png")
             self.idle_textures.append([texture, texture.flip_left_right()])
 
-        # Загрузка RUN (6 кадров)
+        # загрузка текстур для передвижения
         for i in range(6):
             texture = arcade.load_texture(f"textures/Warrior_Run{i + 1}.png")
             self.run_textures.append([texture, texture.flip_left_right()])
-            # Загрузка ATTACK (4 кадра)
+        # загрузка текстур для атак
         for i in range(4):
             texture = arcade.load_texture(f"textures/Warrior_Attack{i + 1}.png")
             self.attack_textures.append([texture, texture.flip_left_right()])
 
-        jump_tex = arcade.load_texture("textures/Warrior_Jump.png")
-        self.jump_texture_pair = [jump_tex, jump_tex.flip_left_right()]
+        jump_texture = arcade.load_texture("textures/Warrior_Jump.png")
+        self.jump_texture = [jump_texture, jump_texture.flip_left_right()]
 
         self.texture = self.idle_textures[0][0]
         self.center_x = x
         self.center_y = y
 
     def update_animation(self, delta_time: float = 1 / 60):
-        # 1. Направление взгляда (не меняем во время атаки, если хотим зафиксировать удар)
-        if not self.is_attacking:
-            if self.change_x < -0.1:
-                self.character_face_direction = 1
-            elif self.change_x > 0.1:
-                self.character_face_direction = 0
 
-        # 2. Логика АТАКИ (Самый высокий приоритет)
-        if self.is_attacking:
-            self.cur_texture += delta_time * 12  # Скорость удара
-            frame = int(self.cur_texture)
-
-            if frame < 4:
-                self.texture = self.attack_textures[frame][self.character_face_direction]
-            else:
-                # Атака закончилась
-                self.is_attacking = False
-                self.cur_texture = 0
-            return  # Выходим, чтобы другие анимации не мешали
-
-        # 3. Анимация прыжка
-        if abs(self.change_y) > 0.5:
-            self.texture = self.jump_texture_pair[self.character_face_direction]
-            return
-
-        # 4. Анимация бега
-        if abs(self.change_x) > 0.1:
-            self.cur_texture += delta_time * 12
-            frame = int(self.cur_texture) % 6
-            self.texture = self.run_textures[frame][self.character_face_direction]
-            return
-
-        # 5. Анимация покоя
-        self.cur_texture += delta_time * 10
-        frame = int(self.cur_texture) % 8
-        self.texture = self.idle_textures[frame][self.character_face_direction]
-
-        if self.invulnerability_timer > 0:
-            self.invulnerability_timer -= delta_time
+        # обратно в привычный цвет
+        if self.take_damage_timer > 0:
+            self.take_damage_timer -= delta_time
         else:
             self.color = arcade.color.WHITE
 
-    def take_damage(self, amount):
-        if self.invulnerability_timer <= 0:
-            self.hp -= amount
-            self.invulnerability_timer = 0.3  # 1.5 секунды неуязвимости
-            self.color = arcade.color.RED_DEVIL  # Игрок краснеет
-            print(f"Игрок получил урон! HP: {self.hp}")
+        if not self.is_attacking:
+
+            # если игрок идет налево
+            if self.change_x < -0.1:
+                self.direction_view = 1
+            # если игрок идет направо
+            elif self.change_x > 0.1:
+                self.direction_view = 0
+
+        # если игрок атакует, то его сначало будет анимация атаки
+        if self.is_attacking:
+            self.cur_texture += delta_time * 10
+            frame = int(self.cur_texture)
+
+            if frame < 4:
+                self.texture = self.attack_textures[frame][self.direction_view]
+            else:
+
+                # атака закончилась
+                self.is_attacking = False
+                self.cur_texture = 0
+            return
+
+        # когда игрок прыгает, он закрывается щитом, чтоб не получать урон от падения
+        if abs(self.change_y) > 0.5:
+            # подбираем нужную текстуру
+            self.texture = self.jump_texture[self.direction_view]
+            return
+
+        # если игрок двигается, анимация бега
+        if abs(self.change_x) > 0.1:
+            # подбираем нужную текстуру
+            self.cur_texture += delta_time * 10
+            frame = int(self.cur_texture) % 6
+            self.texture = self.run_textures[frame][self.direction_view]
+            return
+
+        # анимация покоя
+        self.cur_texture += delta_time * 10
+        frame = int(self.cur_texture) % 8
+        self.texture = self.idle_textures[frame][self.direction_view]
+
+    def take_damage(self):
+        if self.take_damage_timer <= 0:
+            self.hp -= 1
+            self.take_damage_timer = 0.3
+
+            # индикатор получения урона
+            self.color = arcade.color.RED
 
 
 class Enemy(arcade.Sprite):
@@ -518,10 +535,11 @@ class Enemy(arcade.Sprite):
         self.center_x = x
         self.center_y = y
 
-        # Запоминаем начальную точку для патруля
+        # точка куда враг возвращается
         self.start_x = x
-        self.patrol_range = 150  # Радиус патрулирования (вправо и влево)
+        self.patrol_range = 150
 
+        # движок для врагов
         self.enemy_engine = arcade.PhysicsEnginePlatformer(
             self,
             walls=collision_list,
@@ -529,100 +547,98 @@ class Enemy(arcade.Sprite):
             gravity_constant=GRAVITY
         )
 
+        # характеристики врага
         self.hp = 3
-        self.speed_patrol = 1  # Скорость при патруле
-        self.speed_chase = 2  # Скорость при погоне
-        self.dist_to_agressive = 350
-
+        self.speed_patrol = ENEMY_MOVE_SPEED
+        self.speed_chase = ENEMY_MOVE_SPEED * 2
         self.change_x = self.speed_patrol
-        self.state = "PATROL"  # Текущее состояние
+
+        # время до следующего удара
+        self.attack_timer = 0
+
+        # дистанция, при которой враг агрится
+        self.dist_to_agr = 350
+        # дистанция удара
+        self.attack_dist = 60
+
+        # начальное состояние
+        self.state = "патруль"
+
+        # время оглушения
         self.stun_timer = 0
 
-        self.attack_dist = 60  # Дистанция удара
-        self.attack_cooldown = 2.0  # Пауза между ударами (секунды)
-        self.attack_timer = 0  # Текущее время до следующего удара
-
     def update_enemy(self, player):
-        # Уменьшаем таймер атаки
-        if self.attack_timer > 0:
-            self.attack_timer -= 1 / 60
+        distance = arcade.get_distance_between_sprites(self, player)
+        delta_time = 1 / 60
 
-        # Если враг оглушен — логику не выполняем
+        # если враг оглушен, то он не преследует игрока
         if self.stun_timer > 0:
-            self.stun_timer -= 1 / 60
+            self.stun_timer -= delta_time
             self.enemy_engine.update()
             return
 
-        distance = arcade.get_distance_between_sprites(self, player)
+        # обновление таймера атаки
+        if self.attack_timer > 0:
+            self.attack_timer -= delta_time
 
-        # ЛОГИКА АТАКИ
+        # когда враг атакует
         if distance < self.attack_dist and self.attack_timer <= 0:
             self.attack_player(player)
 
-        # ЛОГИКА ПРЕСЛЕДОВАНИЯ (только если не стоим вплотную)
-        elif distance < self.dist_to_agressive:
-            if distance > self.attack_dist - 10:  # Чтобы не "дрожал" в упор
+        # преследование игрока
+        elif distance < self.dist_to_agr:
+            self.state = "преследование"
+
+        else:
+
+            # игрок убежал далеко, возвращаемся к патрулю
+            if self.state == "преследование":
+                self.state = "патруль"
+
+                # направление в сторону начальной точки
+                self.change_x = self.speed_patrol if self.center_x < self.start_x else -self.speed_patrol
+
+        # переключение состояний
+        if self.state == "преследование":
+            if distance > self.attack_dist - 10:
                 if self.center_x < player.center_x:
                     self.change_x = self.speed_chase
                 else:
                     self.change_x = -self.speed_chase
             else:
-                self.change_x = 0  # Останавливаемся, если подошли очень близко
 
-        # Если враг оглушен, он только ждет и подчиняется физике (отлетает)
-        if self.stun_timer > 0:
-            self.stun_timer -= 1 / 60  # Уменьшаем таймер (при 60 FPS)
-            self.enemy_engine.update()
-            return  # Выходим из метода, чтобы логика CHASE не сработала
+                #  если подошли очень близко
+                self.change_x = 0
 
-        distance = arcade.get_distance_between_sprites(self, player)
+        elif self.state == "патруль":
 
-        # 1. ПЕРЕКЛЮЧЕНИЕ СОСТОЯНИЙ
-        if distance < self.dist_to_agressive:
-            self.state = "CHASE"
-        else:
-            # Если игрок убежал далеко, возвращаемся к патрулю
-            if self.state == "CHASE":
-                self.state = "PATROL"
-                # Выбираем направление в сторону дома, чтобы не застрять
-                self.change_x = self.speed_patrol if self.center_x < self.start_x else -self.speed_patrol
-
-        # 2. ВЫПОЛНЕНИЕ ЛОГИКИ
-        if self.state == "CHASE":
-            # Логика погони
-            if self.center_x < player.center_x:
-                self.change_x = self.speed_chase
-            else:
-                self.change_x = -self.speed_chase
-
-        elif self.state == "PATROL":
-            # Логика патрулирования: разворот при выходе за границы радиуса
+            # разворот при выходе за границы радиуса
             if self.center_x > self.start_x + self.patrol_range:
                 self.change_x = -self.speed_patrol
             elif self.center_x < self.start_x - self.patrol_range:
                 self.change_x = self.speed_patrol
 
-            # Дополнительная проверка: если уперся в стену раньше времени
+            # если уперся в стену раньше времени
             if abs(self.change_x) < 0.1:
                 self.change_x = self.speed_patrol if self.center_x < self.start_x else -self.speed_patrol
 
-        # 3. ПРИМЕНЕНИЕ ФИЗИКИ
         self.enemy_engine.update()
 
-    def take_damage(self, amount, knockback_dir):
-        self.hp -= amount
+    def take_damage(self, direction):
+        self.hp -= 1
 
-        # Включаем оглушение на 0.5 секунды
+        # эффект оглушения
         self.stun_timer = 0.5
 
-        # Сильное отбрасывание (dir — это 1 или -1)
-        self.change_x = knockback_dir * 3
-        self.change_y = 5  # Подбросим его чуть-чуть вверх для эффекта
+        # отбрасывание
+        self.change_x = direction * 3
+        self.change_y = 5
 
         if self.hp <= 0:
             self.remove_from_sprite_lists()
 
     def attack_player(self, player):
-        print("Враг атакует!")
-        player.take_damage(1)
-        self.attack_timer = self.attack_cooldown
+        player.take_damage()
+
+        # пауза между ударами
+        self.attack_timer = 2.0

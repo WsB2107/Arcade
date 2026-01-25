@@ -1,4 +1,4 @@
-from classes import *
+from config import *
 import arcade
 from LoginView import Login
 
