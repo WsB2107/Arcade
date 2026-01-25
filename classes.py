@@ -77,33 +77,65 @@ class Player(arcade.Sprite):
         self.cur_texture += delta_time * 10
         frame = int(self.cur_texture) % 8
         self.texture = self.idle_textures[frame][self.character_face_direction]
+
+
 class Enemy(arcade.Sprite):
     def __init__(self, x, y, collision_list, platforms_list):
         super().__init__("textures/test.jpg", 1)
         self.center_x = x
         self.center_y = y
-        self.collision_list = collision_list
-        self.platforms_list = platforms_list
-        # Личный движок врага
+
+        # Запоминаем начальную точку для патруля
+        self.start_x = x
+        self.patrol_range = 150  # Радиус патрулирования (вправо и влево)
+
         self.enemy_engine = arcade.PhysicsEnginePlatformer(
             self,
-            walls=self.collision_list,
-            platforms=self.platforms_list,
-            gravity_constant= GRAVITY
+            walls=collision_list,
+            platforms=platforms_list,
+            gravity_constant=GRAVITY
         )
-        self.hp =3
 
-    def update(self, delta_time: float = 1/60):
+        self.hp = 3
+        self.speed_patrol = 1  # Скорость при патруле
+        self.speed_chase = 2  # Скорость при погоне
+        self.dist_to_agressive = 350
 
-        # Враг сам обновляет свою физику
-        self.enemy_engine.update()
-        self.change_x *= 0.9  # Умножение на 0.9 плавно гасит скорость быстрее
+        self.change_x = self.speed_patrol
+        self.state = "PATROL"  # Текущее состояние
 
-        # Если скорость стала совсем маленькой — обнуляем
-        if abs(self.change_x) < 0.1:
-            self.change_x = 0
+    def update_enemy(self, player):
+        distance = arcade.get_distance_between_sprites(self, player)
 
-    def on_update(self, delta_time):
-        # Враг сам обновляет свою физику
+        # 1. ПЕРЕКЛЮЧЕНИЕ СОСТОЯНИЙ
+        if distance < self.dist_to_agressive:
+            self.state = "CHASE"
+        else:
+            # Если игрок убежал далеко, возвращаемся к патрулю
+            if self.state == "CHASE":
+                self.state = "PATROL"
+                # Выбираем направление в сторону дома, чтобы не застрять
+                self.change_x = self.speed_patrol if self.center_x < self.start_x else -self.speed_patrol
+
+        # 2. ВЫПОЛНЕНИЕ ЛОГИКИ
+        if self.state == "CHASE":
+            # Логика погони
+            if self.center_x < player.center_x:
+                self.change_x = self.speed_chase
+            else:
+                self.change_x = -self.speed_chase
+
+        elif self.state == "PATROL":
+            # Логика патрулирования: разворот при выходе за границы радиуса
+            if self.center_x > self.start_x + self.patrol_range:
+                self.change_x = -self.speed_patrol
+            elif self.center_x < self.start_x - self.patrol_range:
+                self.change_x = self.speed_patrol
+
+            # Дополнительная проверка: если уперся в стену раньше времени
+            if abs(self.change_x) < 0.1:
+                self.change_x = self.speed_patrol if self.center_x < self.start_x else -self.speed_patrol
+
+        # 3. ПРИМЕНЕНИЕ ФИЗИКИ
         self.enemy_engine.update()
 
