@@ -2,7 +2,7 @@ from levels import *
 from arcade.gui import UIManager, UIAnchorLayout, UIBoxLayout, UILabel, UIFlatButton
 from LeaderboardView import Leaderboard
 from SettingsView import Settings
-from levels import Mines
+
 
 
 class MainMenu(arcade.View):
@@ -81,9 +81,11 @@ class MainMenu(arcade.View):
         if self.start_button and self.start_button.rect:
             rect = self.start_button.rect
             if rect.left <= x <= rect.right and rect.bottom <= y <= rect.top:
-                game_view = Mines()
+                self.window.set_fullscreen()
+                game_view = Catacombs()
                 game_view.main_menu = self
                 self.window.show_view(game_view)
+
                 return
 
         if self.leaderboard_button and self.leaderboard_button.rect:
@@ -122,3 +124,5 @@ class MainMenu(arcade.View):
 
         if key == arcade.key.ESCAPE:
             self.window.close()
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)
