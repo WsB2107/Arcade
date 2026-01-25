@@ -27,6 +27,11 @@ class Database:
         user = self.cursor.fetchone()
         return user
 
+    def get_all_users(self):
+
+        self.cursor.execute("SELECT id, username FROM users ORDER BY username")
+        return self.cursor.fetchall()
+
     def get_user_id(self, username):  # возвращает ид юзера
 
         self.cursor.execute("SELECT id FROM users WHERE username = ?", (username,))

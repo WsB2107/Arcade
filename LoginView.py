@@ -95,7 +95,7 @@ class Login(arcade.View):
             success, message = self.user.login(username, password)
             if success:
                 self.set_message(f"Вход выполнен! {message}", arcade.color.GREEN)
-                arcade.schedule(self.go_to_main_menu, 1.0)
+                arcade.schedule_once(self.go_to_main_menu, 1.0)
             else:
                 self.set_message(f"Ошибка: {message}", arcade.color.RED)
 
@@ -158,16 +158,20 @@ class Login(arcade.View):
 
     def on_key_press(self, key, modifiers):  # обработчик нажатия клавиш
 
+        self.ui_manager.on_key_press(key, modifiers)
+
         if key == arcade.key.ENTER:
             self.on_action_button_click()
         elif key == arcade.key.ESCAPE:
             self.go_to_main_menu()
-        else:
-            self.ui_manager.on_key_press(key, modifiers)
 
     def on_text(self, text):  # обработчик ввода текста
 
         self.ui_manager.on_text(text)
+
+    def on_text_motion(self, motion):  # для backspace
+
+        self.ui_manager.on_text_motion(motion)
 
     def go_to_main_menu(self, delta_time=None):  # переход в главное меню
 
