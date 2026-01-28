@@ -178,3 +178,4 @@ class Login(arcade.View):
         menu = MainMenu()
         menu.user = self.user
         self.window.show_view(menu)
+        self.db.close()

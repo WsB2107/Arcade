@@ -46,39 +46,3 @@ class User:
         self.is_logged_in = False
         self.username = None
         self.user_id = None
-
-    def save_level_progress(self, level_num, time_seconds):
-
-        progress_success = self.db.save_level_progress(self.user_id, level_num, time_seconds)
-        record_success = self.db.save_record(self.user_id, level_num, time_seconds)
-        return progress_success and record_success
-
-    def get_level_progress(self, level_num):
-
-        progress = self.db.get_level_progress(self.user_id, level_num)
-
-        if progress:
-            return {'level_num': progress[2], 'completed': bool(progress[3]), 'time_seconds': progress[3]}
-        return None
-
-    def get_user_record(self, level_num):
-
-        record = self.db.get_user_record(self.user_id, level_num)
-
-        if record:
-            return {'level_num': record[2], 'best_time': record[3]}
-        return None
-
-    def get_unlocked_levels(self):
-
-        progress_list = self.db.get_all_levels_progress(self.user_id)
-        unlocked = 1
-
-        for progress in progress_list:
-            level_num = progress[2]
-            time_seconds = progress[3]
-
-            if time_seconds > 0:
-                unlocked = max(unlocked, level_num + 1)
-
-        return unlocked

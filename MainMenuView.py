@@ -2,8 +2,8 @@ from levels import *
 from arcade.gui import UIManager, UIAnchorLayout, UIBoxLayout, UILabel, UIFlatButton
 from LeaderboardView import Leaderboard
 from SettingsView import Settings
-
-
+from LevelSelectView import LevelSelect
+from db import Database
 
 class MainMenu(arcade.View):
     def __init__(self):
@@ -17,6 +17,8 @@ class MainMenu(arcade.View):
         self.settings_button = None
         self.exit_button = None
         self.login_button = None
+
+        self.database = Database()
 
         self.create_ui()
 
@@ -81,11 +83,8 @@ class MainMenu(arcade.View):
         if self.start_button and self.start_button.rect:
             rect = self.start_button.rect
             if rect.left <= x <= rect.right and rect.bottom <= y <= rect.top:
-                self.window.set_fullscreen()
-                game_view = Catacombs()
-                game_view.main_menu = self
-                self.window.show_view(game_view)
-
+                level_select_view = LevelSelect(main_menu=self, user=self.user)
+                self.window.show_view(level_select_view)
                 return
 
         if self.leaderboard_button and self.leaderboard_button.rect:
