@@ -233,7 +233,7 @@ class GameLevel(arcade.View):
 class Mines(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(480, 2800, "level_1.tmx", arcade.color.BLUE_YONDER)
+        super().__init__(480, 2240, "level_1.tmx", arcade.color.BLUE_YONDER)
 
         # слои
         self.sky_list = self.tile_map.sprite_lists["sky"]
@@ -248,7 +248,7 @@ class Mines(GameLevel):
         self.stone_ground_list = self.tile_map.sprite_lists["stone_ground"]
         self.dekor_list = self.tile_map.sprite_lists["dekor"]
 
-        # коллизия
+        # коллизия и дверь
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
         self.door_list = self.tile_map.sprite_lists["door"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
@@ -317,6 +317,7 @@ class Catacombs(GameLevel):
 
         # коллизия
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
+        self.door_list = self.tile_map.sprite_lists["door"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
         # враги
@@ -352,6 +353,7 @@ class Catacombs(GameLevel):
         self.stone_list.draw()
         self.collision_stone_list.draw()
         self.platforms_list.draw()
+        self.door_list.draw()
         self.collision_list.draw()
 
         # враги и игрок
@@ -375,12 +377,16 @@ class Depths(GameLevel):
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
         self.stone_collision_list = self.tile_map.sprite_lists["stone_collision"]
+        self.stone_dungeon_list = self.tile_map.sprite_lists["stone_dungeon"]
+        self.dekor2_list = self.tile_map.sprite_lists["dekor2"]
+        self.dekor1_list = self.tile_map.sprite_lists["dekor1"]
         self.stone_castle_list = self.tile_map.sprite_lists["stone_castle"]
         self.magma_list = self.tile_map.sprite_lists["magma"]
-        self.stone_dungeon_list = self.tile_map.sprite_lists["stone_dungeon"]
+        self.dekor_list = self.tile_map.sprite_lists["dekor"]
 
         # коллизия и лестницы
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
+        self.door_list = self.tile_map.sprite_lists["door"]
         self.ladder_list = self.tile_map.sprite_lists["ladder"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
@@ -406,20 +412,26 @@ class Depths(GameLevel):
         self.world_camera.use()
 
         # задние слои
-
-        # основные слои
         self.backgr_list.draw()
         self.stone_collision_list.draw()
-        self.stone_castle_list.draw()
         self.stone_dungeon_list.draw()
+        self.dekor2_list.draw()
+        self.dekor1_list.draw()
+
+        # основные слои
+        self.stone_castle_list.draw()
         self.ladder_list.draw()
-        self.magma_list.draw()
+        self.door_list.draw()
         self.platforms_list.draw()
         self.collision_list.draw()
 
         # враги и игрок
         self.all_sprites.draw()
         self.enemies_list.draw()
+
+        # декор перед игроком
+        self.dekor_list.draw()
+        self.magma_list.draw()
 
         # GUI
         self.gui_camera.use()
