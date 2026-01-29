@@ -20,6 +20,8 @@ class GameLevel(arcade.View):
 
         # коллизия
         self.platforms_list = None
+        self.door_list = None
+        self.is_near_door = False
         self.collision_list = None
         self.ladder_list = None
 
@@ -99,6 +101,12 @@ class GameLevel(arcade.View):
         # уникальные ловушки для каждого уровня
         self.traps()
 
+        # стоит ли игрок у двери
+        if arcade.check_for_collision_with_list(self.player, self.door_list):
+            self.is_near_door = True
+        else:
+            self.is_near_door = False
+
         # камера
         target = (self.player.center_x, self.player.center_y)
         cx, cy = self.world_camera.position
@@ -157,6 +165,11 @@ class GameLevel(arcade.View):
                 self.player.cur_texture = 0
                 self.player.already_hit = []
 
+        # выход из уровня
+        if key == arcade.key.E:
+            if self.is_near_door:
+                self.victory_view()
+
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W:
             self.up = False
@@ -202,6 +215,19 @@ class GameLevel(arcade.View):
         game_view = self.__class__()
         self.window.show_view(game_view)
 
+    def victory_view(self):
+        # self.unlock_next_level()
+        from VictoryView import VictoryView
+        victory = VictoryView()
+        self.window.show_view(victory)
+
+    # def unlock_next_level(self, user_id, completed_level):  # после прохождения уровня вызывается
+
+    #    next_level = completed_level + 1
+    #   if next_level <= 4:
+    #      return self.unlock_level(user_id, next_level)
+    # return False
+
 
 # уровень 1 - Шахты
 class Mines(GameLevel):
@@ -224,6 +250,7 @@ class Mines(GameLevel):
 
         # коллизия
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
+        self.door_list = self.tile_map.sprite_lists["door"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
         # враги
@@ -255,6 +282,7 @@ class Mines(GameLevel):
         self.stone_list.draw()
         self.stone_ground_list.draw()
         self.platforms_list.draw()
+        self.door_list.draw()
         self.collision_list.draw()
 
         # игрок и враги
