@@ -127,7 +127,8 @@ class Mines(arcade.View):
 
         # обновление врагов и боевку
         for enemy in self.enemies_list:
-            enemy.update_enemy(self.player)
+            check = arcade.check_for_collision_with_list(self.player, self.enemies_list)
+            enemy.update_enemy(self.player, check)
 
         self.update_combat()
 
@@ -237,6 +238,7 @@ class Catacombs(arcade.View):
         self.back2_list = self.tile_map.sprite_lists["back2"]
         self.back1_list = self.tile_map.sprite_lists["back1"]
         self.back_list = self.tile_map.sprite_lists["back"]
+        self.spikes_list = self.tile_map.sprite_lists["spikes"]
         self.dekor2_list = self.tile_map.sprite_lists["dekor2"]
         self.dekor1_list = self.tile_map.sprite_lists["dekor1"]
         self.stone_list = self.tile_map.sprite_lists["stone"]
@@ -284,6 +286,9 @@ class Catacombs(arcade.View):
         self.back2_list.draw()
         self.back1_list.draw()
         self.back_list.draw()
+
+        #
+        self.spikes_list.draw()
         self.dekor2_list.draw()
         self.dekor1_list.draw()
 
@@ -337,9 +342,12 @@ class Catacombs(arcade.View):
 
         # обновление врагов и боевку
         for enemy in self.enemies_list:
-            enemy.update_enemy(self.player)
+            check = arcade.check_for_collision_with_list(self.player, self.enemies_list)
+            enemy.update_enemy(self.player, check)
 
         self.update_combat()
+        if arcade.check_for_collision_with_list(self.player, self.spikes_list):
+            self.player.take_damage()
 
         # камера
         target = (self.player.center_x, self.player.center_y)
@@ -427,6 +435,231 @@ class Catacombs(arcade.View):
         self.window.show_view(game_view)
 
 
+# уровень 3 - Глубины
+class Depths(arcade.View):
+    def __init__(self):
+        super().__init__()
+        arcade.set_background_color(arcade.color.EERIE_BLACK)
+
+        # игрок и спрайты
+        self.player = Player(128, 2570)
+        self.enemies_list = arcade.SpriteList()
+        self.all_sprites = arcade.SpriteList()
+        self.all_sprites.append(self.player)
+
+        self.tile_map = arcade.load_tilemap("level_3.tmx",
+                                            scaling=1.0)
+
+        # слои карты
+        self.backgr_list = self.tile_map.sprite_lists["backgr"]
+        self.platforms_list = self.tile_map.sprite_lists["platforms"]
+        self.stone_collision_list = self.tile_map.sprite_lists["stone_collision"]
+        self.stone_castle_list = self.tile_map.sprite_lists["stone_castle"]
+        self.magma_list = self.tile_map.sprite_lists["magma"]
+        self.stone_dungeon_list = self.tile_map.sprite_lists["stone_dungeon"]
+        self.ladder_list = self.tile_map.sprite_lists["ladder"]
+        self.collision_list = self.tile_map.sprite_lists["collision"]
+
+        # координаты врагов
+        for enemy_point in self.tile_map.object_lists.get("enemies", []):
+            world_x = enemy_point.shape[0]
+            world_y = enemy_point.shape[1]
+            # print(world_x, world_y)
+
+            # объект врага
+            enemy = Enemy(world_x, world_y, self.collision_list, self.platforms_list)
+            self.enemies_list.append(enemy)
+
+        # статы игрока
+        self.left = self.right = self.up = self.down = self.jump_pressed = False
+        self.jump_buffer_timer = 0
+        self.time_since_ground = 999.0
+        self.jumps_left = MAX_JUMPS
+        self.score = 0
+
+        # камера
+        self.batch = Batch()
+        self.world_camera = Camera2D()
+        self.gui_caemra = Camera2D()
+
+        # движок
+        self.engine = arcade.PhysicsEnginePlatformer(
+            self.player,
+            walls=self.collision_list,
+            platforms=self.platforms_list,
+            gravity_constant=GRAVITY,
+            ladders=self.ladder_list
+        )
+
+    def on_draw(self):
+        self.clear()
+        self.world_camera.use()
+
+        # рисуем задние слои
+        self.backgr_list.draw()
+        self.stone_collision_list.draw()
+        self.stone_castle_list.draw()
+        self.stone_dungeon_list.draw()
+        self.ladder_list.draw()
+        self.magma_list.draw()
+        self.platforms_list.draw()
+
+        #
+
+        # основные слои
+
+        self.collision_list.draw()
+
+        # игрок и враги
+        self.all_sprites.draw()
+        self.enemies_list.draw()
+
+        # декорации перед игроком
+        # self.dekor_list.draw()
+
+        # GUI
+        self.gui_caemra.use()
+        self.batch.draw()
+
+    def on_update(self, delta_time):
+
+        # движение игрока
+        move = 0
+        if self.left and not self.right:
+            move = -PLAYER_MOVE_SPEED
+        elif self.right and not self.left:
+            move = PLAYER_MOVE_SPEED
+        self.player.change_x = move
+
+        if self.engine.is_on_ladder():
+            if self.up:
+                self.player.change_y = PLAYER_LADDER_SPEED
+            elif self.down:
+                self.player.change_y = -PLAYER_LADDER_SPEED
+
+        # крутой прыжок
+        else:
+            grounded = self.engine.can_jump(y_distance=6)
+            if grounded:
+                self.time_since_ground = 0
+                self.jumps_left = MAX_JUMPS
+            else:
+                self.time_since_ground += delta_time
+
+            if self.jump_buffer_timer > 0:
+                self.jump_buffer_timer -= delta_time
+            want_jump = self.jump_pressed or (self.jump_buffer_timer > 0)
+
+            if want_jump:
+                can_coyote = (self.time_since_ground <= COYOTE_TIME)
+                if grounded or can_coyote:
+                    self.engine.jump(JUMP_SPEED)
+                    self.jump_buffer_timer = 0
+
+        # движок
+        self.engine.update()
+
+        # обновление врагов и боевку
+        for enemy in self.enemies_list:
+            check = arcade.check_for_collision_with_list(self.player, self.enemies_list)
+            enemy.update_enemy(self.player, check)
+
+        self.update_combat()
+        if arcade.check_for_collision_with_list(self.player, self.magma_list):
+            self.player.take_damage()
+
+        # камера
+        target = (self.player.center_x, self.player.center_y)
+        cx, cy = self.world_camera.position
+        smooth = (cx + (target[0] - cx) * CAMERA_LERP,
+                  cy + (target[1] - cy) * CAMERA_LERP)
+        half_w = self.world_camera.viewport_width / 2
+        half_h = self.world_camera.viewport_height / 2
+
+        self.all_sprites.update_animation(delta_time)
+        self.enemies_list.update_animation(delta_time)
+
+        world_w = 200000
+        world_h = 200000
+        cam_x = max(half_w, min(world_w - half_w, smooth[0]))
+        cam_y = max(half_h, min(world_h - half_h, smooth[1]))
+
+        self.world_camera.position = (cam_x, cam_y)
+        self.gui_caemra.position = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+
+        # экран смерти
+        if self.player.hp <= 0:
+            self.game_over()
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.W:
+
+            self.up = True
+            self.jump_pressed = True
+            self.jump_buffer_timer = JUMP_BUFFER
+        elif key == arcade.key.A:
+            self.left = True
+        elif key == arcade.key.D:
+            self.right = True
+        # чтобы падать быстрее
+        elif key == arcade.key.S:
+            self.down = True
+        if key == arcade.key.ESCAPE:
+            self.window.close()
+
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)
+
+        if key == arcade.key.SPACE:
+            if not self.player.is_attacking:
+                self.player.is_attacking = True
+
+                # сбрасываем счетчик и список при каждом ударе
+                self.player.cur_texture = 0
+                self.player.already_hit = []
+
+    def on_key_release(self, key, modifiers):
+        if key == arcade.key.W:
+            self.up = False
+            self.jump_pressed = False
+            self.jump_buffer_timer = JUMP_BUFFER
+        elif key == arcade.key.S:
+            self.down = False
+        elif key == arcade.key.A:
+            self.left = False
+        elif key == arcade.key.D:
+            self.right = False
+
+    def update_combat(self):
+
+        # считаем фреймы, чтобы вся анимация атаки не наносила урон
+        frame = int(self.player.cur_texture)
+
+        if self.player.is_attacking and frame in [2, 3]:
+            hit_list = arcade.check_for_collision_with_list(self.player, self.enemies_list)
+
+            # враги которым еще не нанесли урон
+            for enemy in hit_list:
+                if enemy not in self.player.already_hit:
+                    # направление отбрасывания
+                    direction = 1 if self.player.direction_view == 0 else -1
+
+                    # нанесение урона
+                    enemy.take_damage(direction)
+
+                    # чтобы враг не получил больше 1 урона за тычку
+                    self.player.already_hit.append(enemy)
+
+    def game_over(self):
+        game_view = Depths()
+        self.window.show_view(game_view)
+
+
+from config import *
+from levels import *
+import arcade
+
+
 class Player(arcade.Sprite):
     def __init__(self, x, y):
         super().__init__(scale=0.5)
@@ -446,8 +679,12 @@ class Player(arcade.Sprite):
         # список врагов, которых мы уже ударили за текущую атаку
         self.already_hit = []
 
-        self.hp = 5  # хп игрока
-        self.take_damage_timer = 0  # таймер неуязвимости после получения урона
+        # хп игрока
+        self.hp = 5
+        self.max_hp = 5
+
+        # таймер неуязвимости после получения урона
+        self.take_damage_timer = 0
 
         # загрузка IDLE
         for i in range(8):
@@ -523,10 +760,22 @@ class Player(arcade.Sprite):
     def take_damage(self):
         if self.take_damage_timer <= 0:
             self.hp -= 1
-            self.take_damage_timer = 0.3
+            self.take_damage_timer = 0.5
 
             # индикатор получения урона
             self.color = arcade.color.RED
+            print(f"получил урон, осталось{self.hp}")
+
+    def heal(self):
+
+        # если хп игрока больше максимума, хп не восстановится
+        if self.hp < self.max_hp:
+            self.hp += 1
+            if self.hp > self.max_hp:
+                self.hp = self.max_hp
+            print(f"Жизнь восстановлена! HP: {self.hp}")
+            return True  # Возвращаем True, если лечение прошло успешно
+        return False  # Возвращаем False, если здоровье и так полное
 
 
 class Enemy(arcade.Sprite):
@@ -567,7 +816,7 @@ class Enemy(arcade.Sprite):
         # время оглушения
         self.stun_timer = 0
 
-    def update_enemy(self, player):
+    def update_enemy(self, player, check):
         distance = arcade.get_distance_between_sprites(self, player)
         delta_time = 1 / 60
 
@@ -583,7 +832,7 @@ class Enemy(arcade.Sprite):
 
         # когда враг атакует
         if distance < self.attack_dist and self.attack_timer <= 0:
-            self.attack_player(player)
+            self.attack_player(player, check)
 
         # преследование игрока
         elif distance < self.dist_to_agr:
@@ -637,8 +886,16 @@ class Enemy(arcade.Sprite):
         if self.hp <= 0:
             self.remove_from_sprite_lists()
 
-    def attack_player(self, player):
-        player.take_damage()
+    def attack_player(self, player, check):
+        if check:
+            player.take_damage()
 
         # пауза между ударами
         self.attack_timer = 2.0
+
+
+class Heart(arcade.Sprite):
+    def __init__(self, x, y, collision_list, platforms_list):
+        super().__init__("textures/heart.jpg", 2)
+        self.center_x = x
+        self.center_y = y

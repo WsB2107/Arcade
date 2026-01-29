@@ -158,14 +158,18 @@ class LevelSelect(arcade.View):
 
         level_num = 1
         if level_name == "mines":
+            self.window.set_fullscreen()
             game_view = Mines()
             level_num = 1
         elif level_name == "catacombs":
+            self.window.set_fullscreen()
             game_view = Catacombs()
             level_num = 2
         elif level_name == "???":
+            self.window.set_fullscreen()
             level_num = 3
         elif level_name == "???":
+            self.window.set_fullscreen()
             level_num = 4
 
         self.window.set_fullscreen(True)
