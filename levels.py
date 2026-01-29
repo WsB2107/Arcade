@@ -62,8 +62,6 @@ class GameLevel(arcade.View):
             heart = Heart(world_x, world_y)
             self.heart_list.append(heart)
 
-
-
     def on_update(self, delta_time):
         if self.paused:
             return
@@ -580,7 +578,6 @@ class Player(arcade.Sprite):
 
         # если игрок двигается, анимация бега
         if abs(self.change_x) > 0.1:
-
             # подбираем нужную текстуру
             self.cur_texture += delta_time * 10
             frame = int(self.cur_texture) % 6
@@ -611,9 +608,39 @@ class Player(arcade.Sprite):
 
 class Enemy(arcade.Sprite):
     def __init__(self, x, y, collision_list, platforms_list):
-        super().__init__("textures/test.jpg", 1)
+        super().__init__(scale=1)
+
         self.center_x = x
         self.center_y = y
+
+        # текущая текстура и направление взгляда
+        self.cur_texture = 0
+        self.direction_view = 0
+
+        # флаг атаки
+        self.is_attacking = False
+
+        # текстуры
+        self.idle_textures = []
+        self.run_textures = []
+        self.attack_textures = []
+
+        # IDLE
+
+        texture = arcade.load_texture("textures/monsters/Skeleton/IDLE.png")
+        self.idle_textures.append([texture, texture.flip_left_right()])
+
+        # RUN
+        for i in range(4):
+            texture = arcade.load_texture(f"textures/monsters/Skeleton/walk{i + 1}.png")
+            self.run_textures.append([texture, texture.flip_left_right()])
+
+        #  ATTACK
+        for i in range(8):
+            texture = arcade.load_texture(f"textures/monsters/Skeleton/attack{i + 1}.png")
+            self.attack_textures.append([texture, texture.flip_left_right()])
+
+        self.texture = self.idle_textures[0][0]
 
         # точка куда враг возвращается
         self.start_x = x
@@ -647,6 +674,47 @@ class Enemy(arcade.Sprite):
         # время оглушения
         self.stun_timer = 0
 
+    def update_animation(self, delta_time: float = 1 / 60):
+        if not self.idle_textures:
+            return
+
+        # красный цвет при получении урона
+        if self.stun_timer > 0:
+            self.color = arcade.color.RED
+        else:
+            self.color = arcade.color.WHITE
+
+        # направление взгляда, если не атакует
+        if not self.is_attacking:
+            if self.change_x < -0.1:
+                self.direction_view = 1
+            elif self.change_x > 0.1:
+                self.direction_view = 0
+
+        # если игрок враг, то его сначала будет анимация атак
+        if self.is_attacking and self.attack_textures:
+            self.cur_texture += delta_time * 20
+            frame = int(self.cur_texture)
+
+            if frame < len(self.attack_textures):
+                self.texture = self.attack_textures[frame][self.direction_view]
+            else:
+
+                # атака закончилась
+                self.is_attacking = False
+                self.cur_texture = 0
+            return
+
+        # передвижение
+        if abs(self.change_x) > 0.1 and self.run_textures:
+            self.cur_texture += delta_time * 10
+            frame = int(self.cur_texture) % len(self.run_textures)
+            self.texture = self.run_textures[frame][self.direction_view]
+            return
+
+        # idle
+        self.texture = self.idle_textures[0][self.direction_view]
+
     def update_enemy(self, player, check):
         distance = arcade.get_distance_between_sprites(self, player)
         delta_time = 1 / 60
@@ -657,7 +725,13 @@ class Enemy(arcade.Sprite):
             self.enemy_engine.update()
             return
 
-        # обновление таймера атаки
+        # если враг атакует, он стоит на месте
+        if self.is_attacking:
+            self.change_x = 0
+            self.enemy_engine.update()
+            return
+
+        #  обновление таймера атаки
         if self.attack_timer > 0:
             self.attack_timer -= delta_time
 
@@ -668,6 +742,7 @@ class Enemy(arcade.Sprite):
         # преследование игрока
         elif distance < self.dist_to_agr:
             self.state = "преследование"
+
 
         else:
 
@@ -718,6 +793,13 @@ class Enemy(arcade.Sprite):
             self.remove_from_sprite_lists()
 
     def attack_player(self, player, check):
+
+        # враг атакует
+        if not self.is_attacking:
+            self.is_attacking = True
+            self.cur_texture = 0
+            self.change_x = 0
+
         if check:
             player.take_damage()
 
