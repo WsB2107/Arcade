@@ -372,7 +372,7 @@ class Catacombs(GameLevel):
 class Depths(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(128, 2570, "level_3.tmx", arcade.color.EERIE_BLACK)
+        super().__init__(128, 2570, "level_3.tmx",(27, 10, 10, 255))
 
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
