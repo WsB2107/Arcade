@@ -38,6 +38,9 @@ class GameLevel(arcade.View):
         # движок
         self.engine = None
 
+        self.paused = False
+        self.pause_menu = None
+
     def spawn_enemies(self):
         #  координаты врагов
         for enemy_point in self.tile_map.object_lists.get("enemies", []):
@@ -47,6 +50,9 @@ class GameLevel(arcade.View):
             self.enemies_list.append(enemy)
 
     def on_update(self, delta_time):
+        if self.paused:
+            return
+
         # движение игрока
         move = 0
         if self.left and not self.right:
@@ -137,7 +143,8 @@ class GameLevel(arcade.View):
             self.down = True
 
         if key == arcade.key.ESCAPE:
-            self.window.close()
+            self.toggle_pause()
+            return
 
         if key == arcade.key.F11:
             self.window.set_fullscreen(not self.window.fullscreen)
@@ -161,6 +168,15 @@ class GameLevel(arcade.View):
             self.left = False
         elif key == arcade.key.D:
             self.right = False
+
+    def toggle_pause(self):
+
+        self.paused = not self.paused
+
+        if self.paused:
+            from PauseView import Pause
+            self.pause_menu = Pause(self)
+            self.window.show_view(self.pause_menu)
 
     def update_combat(self):
 

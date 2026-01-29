@@ -109,7 +109,7 @@ class Login(arcade.View):
 
             if success:
                 self.set_message(f"Регистрация успешна! {message}", arcade.color.GREEN)
-                arcade.schedule(self.go_to_main_menu, 1.0)
+                arcade.schedule_once(self.go_to_main_menu, 1.0)
             else:
                 self.set_message(f"Ошибка: {message}", arcade.color.RED)
 

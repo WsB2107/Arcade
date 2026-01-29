@@ -36,14 +36,15 @@ class Settings(arcade.View):
 
         vbox.add(UILabel(text="", width=250, height=10))
 
-        vbox.add(UILabel(text="ИНСТРУКЦИЯ:", font_size=28, text_color=arcade.color.WHITE,
+        vbox.add(UILabel(text="ИНСТРУКЦИЯ:", font_size=26, text_color=arcade.color.WHITE,
                          align="center", width=350, height=30))
 
         instructions = ["Управление:",
                         "A/D или ←/→ - Движение",
                         "W - Прыжок",
                         "SPACE - Атака",
-                        "ESC - Назад",]
+                        "ESC - Назад/Пауза",
+                        "E - Взаимодействие"]
 
 
         for line in instructions:
