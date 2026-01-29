@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="400" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="16" nextobjectid="18">
+<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="400" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="17" nextobjectid="22">
  <tileset firstgid="1" source="assets/ALL_content.tsx"/>
  <tileset firstgid="82" source="assets/Platforms (32x32).tsx"/>
  <tileset firstgid="178" source="assets/Decorations (32x32).tsx"/>
@@ -88,6 +88,17 @@
    <point/>
   </object>
   <object id="17" x="5812" y="3020">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="16" name="hearts">
+  <object id="18" x="3130" y="1048">
+   <point/>
+  </object>
+  <object id="19" x="2806" y="1912">
+   <point/>
+  </object>
+  <object id="21" x="5104" y="2712">
    <point/>
   </object>
  </objectgroup>

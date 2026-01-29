@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.1" class="enemy" orientation="orthogonal" renderorder="right-down" width="400" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="19" nextobjectid="43">
+<map version="1.10" tiledversion="1.11.1" class="enemy" orientation="orthogonal" renderorder="right-down" width="400" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="20" nextobjectid="44">
  <tileset firstgid="1" source="assets/CloudsBig.tsx"/>
  <tileset firstgid="169" source="assets/cloud1.tsx"/>
  <tileset firstgid="173" source="assets/rock1.tsx"/>
@@ -87,6 +87,11 @@
    <point/>
   </object>
   <object id="42" x="2900" y="2161.33">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="19" name="hearts">
+  <object id="43" x="2814" y="903">
    <point/>
   </object>
  </objectgroup>

@@ -13,6 +13,7 @@ class GameLevel(arcade.View):
         # игрок и спрайтлисты
         self.player = Player(start_x, start_y)
         self.enemies_list = arcade.SpriteList()
+        self.heart_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
         self.all_sprites.append(self.player)
 
@@ -50,6 +51,13 @@ class GameLevel(arcade.View):
             world_y = enemy_point.shape[1]
             enemy = Enemy(world_x, world_y, self.collision_list, self.platforms_list)
             self.enemies_list.append(enemy)
+
+    def spawn_hearts(self):
+        for heart_point in self.tile_map.object_lists.get("hearts", []):
+            world_x = heart_point.shape[0]
+            world_y = heart_point.shape[1]
+            heart = Heart(world_x, world_y)
+            self.heart_list.append(heart)
 
     def on_update(self, delta_time):
         if self.paused:
@@ -106,6 +114,11 @@ class GameLevel(arcade.View):
             self.is_near_door = True
         else:
             self.is_near_door = False
+
+        # подбор сердец
+        for heart in self.heart_list:
+            check = arcade.check_for_collision_with_list(self.player, self.heart_list)
+            heart.update_heart(self.player, check)
 
         # камера
         target = (self.player.center_x, self.player.center_y)
@@ -253,8 +266,9 @@ class Mines(GameLevel):
         self.door_list = self.tile_map.sprite_lists["door"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
-        # враги
+        # враги и сердца
         self.spawn_enemies()
+        self.spawn_hearts()
 
         # движок
         self.engine = arcade.PhysicsEnginePlatformer(
@@ -285,8 +299,9 @@ class Mines(GameLevel):
         self.door_list.draw()
         self.collision_list.draw()
 
-        # игрок и враги
+        # игрок, сердца и враги
         self.all_sprites.draw()
+        self.heart_list.draw()
         self.enemies_list.draw()
 
         # декорации перед игроком
@@ -356,8 +371,9 @@ class Catacombs(GameLevel):
         self.door_list.draw()
         self.collision_list.draw()
 
-        # враги и игрок
+        # враги, сердца и  игрок
         self.all_sprites.draw()
+        self.heart_list.draw()
         self.enemies_list.draw()
 
         # декор перед игроком
@@ -372,7 +388,7 @@ class Catacombs(GameLevel):
 class Depths(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(128, 2570, "level_3.tmx",(27, 10, 10, 255))
+        super().__init__(128, 2570, "level_3.tmx", (27, 10, 10, 255))
 
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
@@ -425,8 +441,9 @@ class Depths(GameLevel):
         self.platforms_list.draw()
         self.collision_list.draw()
 
-        # враги и игрок
+        # враги, сердца и игрок
         self.all_sprites.draw()
+        self.heart_list.draw()
         self.enemies_list.draw()
 
         # декор перед игроком
@@ -524,6 +541,7 @@ class Player(arcade.Sprite):
 
         # если игрок двигается, анимация бега
         if abs(self.change_x) > 0.1:
+
             # подбираем нужную текстуру
             self.cur_texture += delta_time * 10
             frame = int(self.cur_texture) % 6
@@ -542,7 +560,6 @@ class Player(arcade.Sprite):
 
             # индикатор получения урона
             self.color = arcade.color.RED
-            print(f"получил урон, осталось{self.hp}")
 
     def heal(self):
 
@@ -551,9 +568,6 @@ class Player(arcade.Sprite):
             self.hp += 1
             if self.hp > self.max_hp:
                 self.hp = self.max_hp
-            print(f"Жизнь восстановлена! HP: {self.hp}")
-            return True  # Возвращаем True, если лечение прошло успешно
-        return False  # Возвращаем False, если здоровье и так полное
 
 
 class Enemy(arcade.Sprite):
@@ -673,7 +687,12 @@ class Enemy(arcade.Sprite):
 
 
 class Heart(arcade.Sprite):
-    def __init__(self, x, y, collision_list, platforms_list):
-        super().__init__("textures/heart.jpg", 2)
+    def __init__(self, x, y):
+        super().__init__("textures/heart.png", 1)
         self.center_x = x
         self.center_y = y
+
+    def update_heart(self, player, check):
+        if check:
+            player.heal()
+            self.remove_from_sprite_lists()

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="400" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="12">
+<map version="1.10" tiledversion="1.11.1" orientation="orthogonal" renderorder="right-down" width="400" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="16" nextobjectid="16">
  <tileset firstgid="1" source="assets/ALL_content.tsx"/>
  <tileset firstgid="82" source="assets/TerrainPalm (32x32).tsx"/>
  <tileset firstgid="422" source="assets/ladder.tsx"/>
@@ -74,13 +74,24 @@
   <object id="6" x="4328" y="1154">
    <point/>
   </object>
-  <object id="7" x="4834" y="1158">
+  <object id="7" x="4996" y="1176">
    <point/>
   </object>
   <object id="9" x="5052" y="1553.33">
    <point/>
   </object>
   <object id="10" x="4886.5" y="794">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="15" name="hearts">
+  <object id="12" x="5138.67" y="1362.67">
+   <point/>
+  </object>
+  <object id="13" x="5774.67" y="1797.33">
+   <point/>
+  </object>
+  <object id="14" x="4292" y="802.667">
    <point/>
   </object>
  </objectgroup>
