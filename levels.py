@@ -17,6 +17,9 @@ class GameLevel(arcade.View):
         self.all_sprites = arcade.SpriteList()
         self.all_sprites.append(self.player)
 
+        # худ бар хп
+        self.hud_heart = arcade.load_texture("textures/heart.png")
+
         self.tile_map = arcade.load_tilemap(map_name, scaling=1.0)
 
         # коллизия
@@ -58,6 +61,8 @@ class GameLevel(arcade.View):
             world_y = heart_point.shape[1]
             heart = Heart(world_x, world_y)
             self.heart_list.append(heart)
+
+
 
     def on_update(self, delta_time):
         if self.paused:
@@ -224,6 +229,37 @@ class GameLevel(arcade.View):
                     # чтобы враг не получил больше 1 урона за тычку
                     self.player.already_hit.append(enemy)
 
+    def draw_health_bar(self):
+
+        icon_size = 48
+        icon_left = 0
+        icon_bottom = SCREEN_HEIGHT - icon_size
+
+        # прямоугольник для иконки
+        health_rect = arcade.rect.LBWH(
+            left=icon_left,
+            bottom=icon_bottom,
+            width=icon_size,
+            height=icon_size
+        )
+
+        # иконка хп
+        arcade.draw_texture_rect(
+            texture=self.hud_heart,
+            rect=health_rect
+        )
+
+        # кол-во хп
+        arcade.draw_text(
+            text=f"x {self.player.hp}",
+            x=icon_left + icon_size + 2,
+            y=icon_bottom + (icon_size / 2),
+            color=arcade.color.WHITE,
+            font_size=22,
+            bold=True,
+            anchor_y="center"
+        )
+
     def game_over(self):
         game_view = self.__class__()
         self.window.show_view(game_view)
@@ -310,6 +346,9 @@ class Mines(GameLevel):
         # GUI
         self.gui_camera.use()
         self.batch.draw()
+
+        # хп бар
+        self.draw_health_bar()
 
 
 # уровень 2 - Катакомбы
