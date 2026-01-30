@@ -548,19 +548,19 @@ class Player(arcade.Sprite):
 
         # загрузка IDLE
         for i in range(8):
-            texture = arcade.load_texture(f"textures/Warrior_IDLE{i + 1}.png")
+            texture = arcade.load_texture(f"textures/Warrior/Warrior_IDLE{i + 1}.png")
             self.idle_textures.append([texture, texture.flip_left_right()])
 
         # загрузка текстур для передвижения
         for i in range(6):
-            texture = arcade.load_texture(f"textures/Warrior_Run{i + 1}.png")
+            texture = arcade.load_texture(f"textures/Warrior/Warrior_Run{i + 1}.png")
             self.run_textures.append([texture, texture.flip_left_right()])
         # загрузка текстур для атак
         for i in range(4):
-            texture = arcade.load_texture(f"textures/Warrior_Attack{i + 1}.png")
+            texture = arcade.load_texture(f"textures/Warrior/Warrior_Attack{i + 1}.png")
             self.attack_textures.append([texture, texture.flip_left_right()])
 
-        jump_texture = arcade.load_texture("textures/Warrior_Jump.png")
+        jump_texture = arcade.load_texture("textures/Warrior/Warrior_Jump.png")
         self.jump_texture = [jump_texture, jump_texture.flip_left_right()]
 
         self.texture = self.idle_textures[0][0]
