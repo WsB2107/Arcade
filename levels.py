@@ -7,7 +7,7 @@ from VictoryView import VictoryView
 
 # Общий родительский класс для всех уровней
 class GameLevel(arcade.View):
-    def __init__(self, start_x, start_y, map_name, bg_color):
+    def __init__(self, start_x, start_y, map_name, bg_color, music):
         super().__init__()
         arcade.set_background_color(bg_color)
 
@@ -24,6 +24,11 @@ class GameLevel(arcade.View):
         self.hud_heart = arcade.load_texture("textures/heart.png")
 
         self.tile_map = arcade.load_tilemap(map_name, scaling=1.0)
+
+        # аудио для победы
+        self.win = arcade.load_sound("sound/win.mp3")
+
+        self.hero_attack = arcade.load_sound("sound/hero_attack.mp3")
 
         # коллизия
         self.platforms_list = None
@@ -49,6 +54,11 @@ class GameLevel(arcade.View):
 
         self.paused = False
         self.pause_menu = None
+
+        # музыка на фоне уровня
+        self.music_player = arcade.play_sound(
+            arcade.load_sound(music),
+            volume=0.3)
 
     def spawn_enemies(self):
         #  координаты врагов
@@ -131,7 +141,7 @@ class GameLevel(arcade.View):
 
         # подбор сердец
         for heart in self.heart_list:
-            check = arcade.check_for_collision_with_list(self.player, self.heart_list)
+            check = arcade.check_for_collision(self.player, heart)
             heart.update_heart(self.player, check)
 
         # камера
@@ -187,6 +197,7 @@ class GameLevel(arcade.View):
         if key == arcade.key.SPACE:
             if not self.player.is_attacking:
                 self.player.is_attacking = True
+                arcade.play_sound(self.hero_attack, volume=0.5)
 
                 # сбрасываем счетчик и список при каждом ударе
                 self.player.cur_texture = 0
@@ -228,6 +239,7 @@ class GameLevel(arcade.View):
         if self.player.is_attacking and frame in [2, 3]:
             hit_list = arcade.check_for_collision_with_list(self.player, self.enemies_list)
 
+
             # враги которым еще не нанесли урон
             for enemy in hit_list:
                 if enemy not in self.player.already_hit:
@@ -251,14 +263,12 @@ class GameLevel(arcade.View):
             left=icon_left,
             bottom=icon_bottom,
             width=icon_size,
-            height=icon_size
-        )
+            height=icon_size)
 
         # иконка хп
         arcade.draw_texture_rect(
             texture=self.hud_heart,
-            rect=health_rect
-        )
+            rect=health_rect)
 
         # кол-во хп
         arcade.draw_text(
@@ -268,10 +278,10 @@ class GameLevel(arcade.View):
             color=arcade.color.WHITE,
             font_size=22,
             bold=True,
-            anchor_y="center"
-        )
+            anchor_y="center")
 
     def game_over(self):
+        self.music_player.pause()
         game_view = self.__class__()
         self.window.show_view(game_view)
 
@@ -281,6 +291,8 @@ class GameLevel(arcade.View):
         victory_view = VictoryView(
             level_number=getattr(self, 'level_number', 1),completion_time=finish_time,user=self.user)
         self.window.show_view(victory_view)
+        self.music_player.pause()
+        arcade.play_sound(self.win, volume=0.5)
 
 
     def on_show_view(self):
@@ -299,7 +311,8 @@ class GameLevel(arcade.View):
 class Mines(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(480, 2240, "level_1.tmx", arcade.color.BLUE_YONDER)
+        super().__init__(480, 2240, "level_1.tmx",
+                         arcade.color.BLUE_YONDER, "sound/level1.mp3")
 
         # слои
         self.sky_list = self.tile_map.sprite_lists["sky"]
@@ -375,7 +388,8 @@ class Mines(GameLevel):
 class Catacombs(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(128, 2800, "level_2.tmx", arcade.color.EERIE_BLACK)
+        super().__init__(128, 2800, "level_2.tmx",
+                         arcade.color.EERIE_BLACK, "sound/level2.mp3")
 
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
@@ -396,6 +410,7 @@ class Catacombs(GameLevel):
 
         # враги
         self.spawn_enemies()
+        self.spawn_hearts()
 
         # движок
         self.engine = arcade.PhysicsEnginePlatformer(
@@ -431,7 +446,7 @@ class Catacombs(GameLevel):
         self.door_list.draw()
         self.collision_list.draw()
 
-        # враги, сердца и  игрок
+        # враги, сердца и игрок
         self.all_sprites.draw()
         self.heart_list.draw()
         self.enemies_list.draw()
@@ -445,12 +460,16 @@ class Catacombs(GameLevel):
             self.timer_text.draw()
         self.batch.draw()
 
+        # хп бар
+        self.draw_health_bar()
+
 
 # уровень 3 - Глубины
 class Depths(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(128, 2570, "level_3.tmx", (27, 10, 10, 255))
+        super().__init__(128, 2570, "level_3.tmx",
+                         (27, 10, 10, 255), "sound/level3.mp3")
 
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
@@ -470,6 +489,7 @@ class Depths(GameLevel):
 
         # враги
         self.spawn_enemies()
+        self.spawn_hearts()
 
         # движок
         self.engine = arcade.PhysicsEnginePlatformer(
@@ -519,6 +539,9 @@ class Depths(GameLevel):
             self.timer_text.draw()
         self.batch.draw()
 
+        # хп бар
+        self.draw_health_bar()
+
 
 class Player(arcade.Sprite):
     def __init__(self, x, y):
@@ -559,6 +582,9 @@ class Player(arcade.Sprite):
         for i in range(4):
             texture = arcade.load_texture(f"textures/Warrior/Warrior_Attack{i + 1}.png")
             self.attack_textures.append([texture, texture.flip_left_right()])
+
+        # загрузка звук. эффектов получения урона
+        self.hero_hit = arcade.load_sound("sound/hero_hit.mp3")
 
         jump_texture = arcade.load_texture("textures/Warrior/Warrior_Jump.png")
         self.jump_texture = [jump_texture, jump_texture.flip_left_right()]
@@ -621,6 +647,7 @@ class Player(arcade.Sprite):
         if self.take_damage_timer <= 0:
             self.hp -= 1
             self.take_damage_timer = 0.5
+            arcade.play_sound(self.hero_hit, volume=0.5)
 
             # индикатор получения урона
             self.color = arcade.color.RED
@@ -667,6 +694,11 @@ class Enemy(arcade.Sprite):
         for i in range(8):
             texture = arcade.load_texture(f"textures/monsters/Skeleton/attack{i + 1}.png")
             self.attack_textures.append([texture, texture.flip_left_right()])
+
+        # загрузка звук. эффектов
+        self.skeleton_attack = arcade.load_sound("sound/skeleton_attack.wav")
+        self.skeleton_hit = arcade.load_sound("sound/skeleton_hit.wav")
+        self.skeleton_death = arcade.load_sound("sound/skeleton_death.wav")
 
         self.texture = self.idle_textures[0][0]
 
@@ -808,6 +840,7 @@ class Enemy(arcade.Sprite):
         self.enemy_engine.update()
 
     def take_damage(self, direction):
+        arcade.play_sound(self.skeleton_hit, volume=0.5)
         self.hp -= 1
 
         # эффект оглушения
@@ -819,6 +852,7 @@ class Enemy(arcade.Sprite):
 
         if self.hp <= 0:
             self.remove_from_sprite_lists()
+            arcade.play_sound(self.skeleton_death, volume=0.5)
 
     def attack_player(self, player, check):
 
@@ -827,6 +861,7 @@ class Enemy(arcade.Sprite):
             self.is_attacking = True
             self.cur_texture = 0
             self.change_x = 0
+            arcade.play_sound(self.skeleton_attack, volume=1)
 
         if check:
             player.take_damage()
@@ -840,8 +875,12 @@ class Heart(arcade.Sprite):
         super().__init__("textures/heart.png", 1)
         self.center_x = x
         self.center_y = y
+        self.health_up = arcade.load_sound("sound/health_up.wav")
 
     def update_heart(self, player, check):
         if check:
             player.heal()
             self.remove_from_sprite_lists()
+            arcade.play_sound(self.health_up, volume=0.5)
+
+
