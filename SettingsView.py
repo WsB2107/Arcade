@@ -15,7 +15,7 @@ class Settings(arcade.View):
 
         self.create_ui()
 
-    def create_ui(self):#создание интерфейса
+    def create_ui(self):  # создание интерфейса
 
         self.ui_manager.clear()
 
@@ -40,15 +40,14 @@ class Settings(arcade.View):
                          align="center", width=350, height=30))
 
         instructions = ["Управление:",
-                        "A/D или ←/→ - Движение",
+                        "A/D - Движение",
                         "W - Прыжок",
                         "SPACE - Атака",
                         "ESC - Назад/Пауза",
                         "E - Взаимодействие"]
 
-
         for line in instructions:
-            vbox.add(UILabel(text=line, font_size=20, text_color=WHITE,align="left", width=350, height=20))
+            vbox.add(UILabel(text=line, font_size=20, text_color=WHITE, align="left", width=350, height=20))
 
         vbox.add(UILabel(text="", width=250, height=10))
 
@@ -66,21 +65,21 @@ class Settings(arcade.View):
         anchor.add(child=vbox, anchor_x="center", anchor_y="center")
         self.ui_manager.add(anchor)
 
-    def on_show(self):#показ окна
+    def on_show(self):  # показ окна
         self.ui_manager.enable()
 
-    def on_hide(self):#скрытие окна
+    def on_hide(self):  # скрытие окна
         self.ui_manager.disable()
 
-    def on_draw(self):#отрисовка
+    def on_draw(self):  # отрисовка
         self.clear()
-        arcade.draw_texture_rect(self.background_texture,arcade.rect.XYWH(self.window.width // 2,
-                                                                          self.window.height // 2,
-                                                                          self.window.width,
-                                                                          self.window.height))
+        arcade.draw_texture_rect(self.background_texture, arcade.rect.XYWH(self.window.width // 2,
+                                                                           self.window.height // 2,
+                                                                           self.window.width,
+                                                                           self.window.height))
         self.ui_manager.draw()
 
-    def on_mouse_press(self, x, y, button, modifiers):#обработка нажатия мыши
+    def on_mouse_press(self, x, y, button, modifiers):  # обработка нажатия мыши
         self.ui_manager.on_mouse_press(x, y, button, modifiers)
 
         if self.back_button and self.back_button.rect:
@@ -96,17 +95,17 @@ class Settings(arcade.View):
                 self.volume = self.volume_slider.value
                 return
 
-    def on_mouse_release(self, x, y, button, modifiers):#обработка отпускания мыши
+    def on_mouse_release(self, x, y, button, modifiers):  # обработка отпускания мыши
         self.ui_manager.on_mouse_release(x, y, button, modifiers)
         self.dragging_slider = False
 
-    def on_mouse_motion(self, x, y, dx, dy):#обновляет ползунок
+    def on_mouse_motion(self, x, y, dx, dy):  # обновляет ползунок
         self.ui_manager.on_mouse_motion(x, y, dx, dy)
         if self.volume != self.volume_slider.value:
             self.volume = self.volume_slider.value
             self.volume_label.text = f"Громкость: {int(self.volume * 100)}%"
 
-    def on_key_press(self, key, modifiers):#обработка нажатия клавиш
+    def on_key_press(self, key, modifiers):  # обработка нажатия клавиш
         if key == arcade.key.ESCAPE:
             if self.back_view:
                 self.window.show_view(self.back_view)

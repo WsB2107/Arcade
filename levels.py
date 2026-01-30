@@ -16,8 +16,12 @@ class GameLevel(arcade.View):
         # игрок и спрайтлисты
         self.player = Player(start_x, start_y)
         self.enemies_list = arcade.SpriteList()
+        self.heart_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
         self.all_sprites.append(self.player)
+
+        # худ бар хп
+        self.hud_heart = arcade.load_texture("textures/heart.png")
 
         self.tile_map = arcade.load_tilemap(map_name, scaling=1.0)
 
@@ -53,6 +57,13 @@ class GameLevel(arcade.View):
             world_y = enemy_point.shape[1]
             enemy = Enemy(world_x, world_y, self.collision_list, self.platforms_list)
             self.enemies_list.append(enemy)
+
+    def spawn_hearts(self):
+        for heart_point in self.tile_map.object_lists.get("hearts", []):
+            world_x = heart_point.shape[0]
+            world_y = heart_point.shape[1]
+            heart = Heart(world_x, world_y)
+            self.heart_list.append(heart)
 
     def on_update(self, delta_time):
 
@@ -117,6 +128,11 @@ class GameLevel(arcade.View):
             self.is_near_door = True
         else:
             self.is_near_door = False
+
+        # подбор сердец
+        for heart in self.heart_list:
+            check = arcade.check_for_collision_with_list(self.player, self.heart_list)
+            heart.update_heart(self.player, check)
 
         # камера
         target = (self.player.center_x, self.player.center_y)
@@ -224,6 +240,37 @@ class GameLevel(arcade.View):
                     # чтобы враг не получил больше 1 урона за тычку
                     self.player.already_hit.append(enemy)
 
+    def draw_health_bar(self):
+
+        icon_size = 48
+        icon_left = 0
+        icon_bottom = SCREEN_HEIGHT - icon_size
+
+        # прямоугольник для иконки
+        health_rect = arcade.rect.LBWH(
+            left=icon_left,
+            bottom=icon_bottom,
+            width=icon_size,
+            height=icon_size
+        )
+
+        # иконка хп
+        arcade.draw_texture_rect(
+            texture=self.hud_heart,
+            rect=health_rect
+        )
+
+        # кол-во хп
+        arcade.draw_text(
+            text=f"x {self.player.hp}",
+            x=icon_left + icon_size + 2,
+            y=icon_bottom + (icon_size / 2),
+            color=arcade.color.WHITE,
+            font_size=22,
+            bold=True,
+            anchor_y="center"
+        )
+
     def game_over(self):
         game_view = self.__class__()
         self.window.show_view(game_view)
@@ -252,7 +299,7 @@ class GameLevel(arcade.View):
 class Mines(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(480, 2800, "level_1.tmx", arcade.color.BLUE_YONDER)
+        super().__init__(480, 2240, "level_1.tmx", arcade.color.BLUE_YONDER)
 
         # слои
         self.sky_list = self.tile_map.sprite_lists["sky"]
@@ -267,13 +314,14 @@ class Mines(GameLevel):
         self.stone_ground_list = self.tile_map.sprite_lists["stone_ground"]
         self.dekor_list = self.tile_map.sprite_lists["dekor"]
 
-        # коллизия
+        # коллизия и дверь
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
         self.door_list = self.tile_map.sprite_lists["door"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
-        # враги
+        # враги и сердца
         self.spawn_enemies()
+        self.spawn_hearts()
 
         # движок
         self.engine = arcade.PhysicsEnginePlatformer(
@@ -305,8 +353,9 @@ class Mines(GameLevel):
         self.door_list.draw()
         self.collision_list.draw()
 
-        # игрок и враги
+        # игрок, сердца и враги
         self.all_sprites.draw()
+        self.heart_list.draw()
         self.enemies_list.draw()
 
         # декорации перед игроком
@@ -317,6 +366,9 @@ class Mines(GameLevel):
         if hasattr(self, 'timer_text'):
             self.timer_text.draw()
         self.batch.draw()
+
+        # хп бар
+        self.draw_health_bar()
 
 
 # уровень 2 - Катакомбы
@@ -339,6 +391,7 @@ class Catacombs(GameLevel):
 
         # коллизия
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
+        self.door_list = self.tile_map.sprite_lists["door"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
         # враги
@@ -375,10 +428,12 @@ class Catacombs(GameLevel):
         self.stone_list.draw()
         self.collision_stone_list.draw()
         self.platforms_list.draw()
+        self.door_list.draw()
         self.collision_list.draw()
 
-        # враги и игрок
+        # враги, сердца и  игрок
         self.all_sprites.draw()
+        self.heart_list.draw()
         self.enemies_list.draw()
 
         # декор перед игроком
@@ -395,17 +450,21 @@ class Catacombs(GameLevel):
 class Depths(GameLevel):
     def __init__(self):
         # инициализация
-        super().__init__(128, 2570, "level_3.tmx", arcade.color.EERIE_BLACK)
+        super().__init__(128, 2570, "level_3.tmx", (27, 10, 10, 255))
 
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
         self.stone_collision_list = self.tile_map.sprite_lists["stone_collision"]
+        self.stone_dungeon_list = self.tile_map.sprite_lists["stone_dungeon"]
+        self.dekor2_list = self.tile_map.sprite_lists["dekor2"]
+        self.dekor1_list = self.tile_map.sprite_lists["dekor1"]
         self.stone_castle_list = self.tile_map.sprite_lists["stone_castle"]
         self.magma_list = self.tile_map.sprite_lists["magma"]
-        self.stone_dungeon_list = self.tile_map.sprite_lists["stone_dungeon"]
+        self.dekor_list = self.tile_map.sprite_lists["dekor"]
 
         # коллизия и лестницы
         self.platforms_list = self.tile_map.sprite_lists["platforms"]
+        self.door_list = self.tile_map.sprite_lists["door"]
         self.ladder_list = self.tile_map.sprite_lists["ladder"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
@@ -432,20 +491,27 @@ class Depths(GameLevel):
         self.world_camera.use()
 
         # задние слои
-
-        # основные слои
         self.backgr_list.draw()
         self.stone_collision_list.draw()
-        self.stone_castle_list.draw()
         self.stone_dungeon_list.draw()
+        self.dekor2_list.draw()
+        self.dekor1_list.draw()
+
+        # основные слои
+        self.stone_castle_list.draw()
         self.ladder_list.draw()
-        self.magma_list.draw()
+        self.door_list.draw()
         self.platforms_list.draw()
         self.collision_list.draw()
 
-        # враги и игрок
+        # враги, сердца и игрок
         self.all_sprites.draw()
+        self.heart_list.draw()
         self.enemies_list.draw()
+
+        # декор перед игроком
+        self.dekor_list.draw()
+        self.magma_list.draw()
 
         # GUI
         self.gui_camera.use()
@@ -558,7 +624,6 @@ class Player(arcade.Sprite):
 
             # индикатор получения урона
             self.color = arcade.color.RED
-            print(f"получил урон, осталось{self.hp}")
 
     def heal(self):
 
@@ -567,16 +632,43 @@ class Player(arcade.Sprite):
             self.hp += 1
             if self.hp > self.max_hp:
                 self.hp = self.max_hp
-            print(f"Жизнь восстановлена! HP: {self.hp}")
-            return True  # Возвращаем True, если лечение прошло успешно
-        return False  # Возвращаем False, если здоровье и так полное
 
 
 class Enemy(arcade.Sprite):
     def __init__(self, x, y, collision_list, platforms_list):
-        super().__init__("textures/test.jpg", 1)
+        super().__init__(scale=1)
+
         self.center_x = x
         self.center_y = y
+
+        # текущая текстура и направление взгляда
+        self.cur_texture = 0
+        self.direction_view = 0
+
+        # флаг атаки
+        self.is_attacking = False
+
+        # текстуры
+        self.idle_textures = []
+        self.run_textures = []
+        self.attack_textures = []
+
+        # IDLE
+
+        texture = arcade.load_texture("textures/monsters/Skeleton/IDLE.png")
+        self.idle_textures.append([texture, texture.flip_left_right()])
+
+        # RUN
+        for i in range(4):
+            texture = arcade.load_texture(f"textures/monsters/Skeleton/walk{i + 1}.png")
+            self.run_textures.append([texture, texture.flip_left_right()])
+
+        #  ATTACK
+        for i in range(8):
+            texture = arcade.load_texture(f"textures/monsters/Skeleton/attack{i + 1}.png")
+            self.attack_textures.append([texture, texture.flip_left_right()])
+
+        self.texture = self.idle_textures[0][0]
 
         # точка куда враг возвращается
         self.start_x = x
@@ -610,6 +702,47 @@ class Enemy(arcade.Sprite):
         # время оглушения
         self.stun_timer = 0
 
+    def update_animation(self, delta_time: float = 1 / 60):
+        if not self.idle_textures:
+            return
+
+        # красный цвет при получении урона
+        if self.stun_timer > 0:
+            self.color = arcade.color.RED
+        else:
+            self.color = arcade.color.WHITE
+
+        # направление взгляда, если не атакует
+        if not self.is_attacking:
+            if self.change_x < -0.1:
+                self.direction_view = 1
+            elif self.change_x > 0.1:
+                self.direction_view = 0
+
+        # если игрок враг, то его сначала будет анимация атак
+        if self.is_attacking and self.attack_textures:
+            self.cur_texture += delta_time * 20
+            frame = int(self.cur_texture)
+
+            if frame < len(self.attack_textures):
+                self.texture = self.attack_textures[frame][self.direction_view]
+            else:
+
+                # атака закончилась
+                self.is_attacking = False
+                self.cur_texture = 0
+            return
+
+        # передвижение
+        if abs(self.change_x) > 0.1 and self.run_textures:
+            self.cur_texture += delta_time * 10
+            frame = int(self.cur_texture) % len(self.run_textures)
+            self.texture = self.run_textures[frame][self.direction_view]
+            return
+
+        # idle
+        self.texture = self.idle_textures[0][self.direction_view]
+
     def update_enemy(self, player, check):
         distance = arcade.get_distance_between_sprites(self, player)
         delta_time = 1 / 60
@@ -620,7 +753,13 @@ class Enemy(arcade.Sprite):
             self.enemy_engine.update()
             return
 
-        # обновление таймера атаки
+        # если враг атакует, он стоит на месте
+        if self.is_attacking:
+            self.change_x = 0
+            self.enemy_engine.update()
+            return
+
+        #  обновление таймера атаки
         if self.attack_timer > 0:
             self.attack_timer -= delta_time
 
@@ -631,6 +770,7 @@ class Enemy(arcade.Sprite):
         # преследование игрока
         elif distance < self.dist_to_agr:
             self.state = "преследование"
+
 
         else:
 
@@ -681,6 +821,13 @@ class Enemy(arcade.Sprite):
             self.remove_from_sprite_lists()
 
     def attack_player(self, player, check):
+
+        # враг атакует
+        if not self.is_attacking:
+            self.is_attacking = True
+            self.cur_texture = 0
+            self.change_x = 0
+
         if check:
             player.take_damage()
 
@@ -689,7 +836,12 @@ class Enemy(arcade.Sprite):
 
 
 class Heart(arcade.Sprite):
-    def __init__(self, x, y, collision_list, platforms_list):
-        super().__init__("textures/heart.jpg", 2)
+    def __init__(self, x, y):
+        super().__init__("textures/heart.png", 1)
         self.center_x = x
         self.center_y = y
+
+    def update_heart(self, player, check):
+        if check:
+            player.heal()
+            self.remove_from_sprite_lists()
