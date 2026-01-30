@@ -5,6 +5,7 @@ from arcade import Camera2D
 from Timer import Timer
 from VictoryView import VictoryView
 
+
 # Общий родительский класс для всех уровней
 class GameLevel(arcade.View):
     def __init__(self, start_x, start_y, map_name, bg_color, music):
@@ -58,7 +59,7 @@ class GameLevel(arcade.View):
         # музыка на фоне уровня
         self.music_player = arcade.play_sound(
             arcade.load_sound(music),
-            volume=0.3)
+            volume=VOLUME["volume"] * 0.7)
 
     def spawn_enemies(self):
         #  координаты врагов
@@ -197,7 +198,7 @@ class GameLevel(arcade.View):
         if key == arcade.key.SPACE:
             if not self.player.is_attacking:
                 self.player.is_attacking = True
-                arcade.play_sound(self.hero_attack, volume=0.5)
+                arcade.play_sound(self.hero_attack, VOLUME["volume"])
 
                 # сбрасываем счетчик и список при каждом ударе
                 self.player.cur_texture = 0
@@ -238,7 +239,6 @@ class GameLevel(arcade.View):
 
         if self.player.is_attacking and frame in [2, 3]:
             hit_list = arcade.check_for_collision_with_list(self.player, self.enemies_list)
-
 
             # враги которым еще не нанесли урон
             for enemy in hit_list:
@@ -289,22 +289,21 @@ class GameLevel(arcade.View):
 
         finish_time = self.timer.stop()
         victory_view = VictoryView(
-            level_number=getattr(self, 'level_number', 1),completion_time=finish_time,user=self.user)
+            level_number=getattr(self, 'level_number', 1), completion_time=finish_time, user=self.user)
         self.window.show_view(victory_view)
         self.music_player.pause()
-        arcade.play_sound(self.win, volume=0.5)
-
+        arcade.play_sound(self.win, volume=VOLUME["volume"])
+        arcade.set_background_color(arcade.color.BLACK)
 
     def on_show_view(self):
 
-            self.timer_text = arcade.Text(text="Time: 00:00",x=10,y=self.window.height - 30,
-                                          color=arcade.color.WHITE,font_size=20)
-            if not self.timer.is_running:
-                self.timer.start()
-            else:
-                if self.timer.is_paused:
-                    self.timer.resume()
-
+        self.timer_text = arcade.Text(text="Time: 00:00", x=10, y=self.window.height - 30,
+                                      color=arcade.color.WHITE, font_size=20)
+        if not self.timer.is_running:
+            self.timer.start()
+        else:
+            if self.timer.is_paused:
+                self.timer.resume()
 
 
 # уровень 1 - Шахты
@@ -647,7 +646,7 @@ class Player(arcade.Sprite):
         if self.take_damage_timer <= 0:
             self.hp -= 1
             self.take_damage_timer = 0.5
-            arcade.play_sound(self.hero_hit, volume=0.5)
+            arcade.play_sound(self.hero_hit, VOLUME["volume"])
 
             # индикатор получения урона
             self.color = arcade.color.RED
@@ -840,7 +839,7 @@ class Enemy(arcade.Sprite):
         self.enemy_engine.update()
 
     def take_damage(self, direction):
-        arcade.play_sound(self.skeleton_hit, volume=0.5)
+        arcade.play_sound(self.skeleton_hit, volume=VOLUME["volume"])
         self.hp -= 1
 
         # эффект оглушения
@@ -852,7 +851,7 @@ class Enemy(arcade.Sprite):
 
         if self.hp <= 0:
             self.remove_from_sprite_lists()
-            arcade.play_sound(self.skeleton_death, volume=0.5)
+            arcade.play_sound(self.skeleton_death, volume=VOLUME["volume"])
 
     def attack_player(self, player, check):
 
@@ -881,6 +880,4 @@ class Heart(arcade.Sprite):
         if check:
             player.heal()
             self.remove_from_sprite_lists()
-            arcade.play_sound(self.health_up, volume=0.5)
-
-
+            arcade.play_sound(self.health_up, volume=VOLUME["volume"])
