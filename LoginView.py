@@ -21,6 +21,7 @@ class Login(arcade.View):
         self.password_input = None
         self.confirm_input = None
         self.create_ui()
+        self.window.set_fullscreen()
 
     def create_ui(self):  # создание пользовательского интерфейса
 
@@ -164,6 +165,8 @@ class Login(arcade.View):
             self.on_action_button_click()
         elif key == arcade.key.ESCAPE:
             self.go_to_main_menu()
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)
 
     def on_text(self, text):  # обработчик ввода текста
 

@@ -231,6 +231,9 @@ class Leaderboard(arcade.View):
             else:
                 self.create_level_selection_ui()
 
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)
+
     def on_mouse_motion(self, x, y, dx, dy):
 
         self.ui_manager.on_mouse_motion(x, y, dx, dy)

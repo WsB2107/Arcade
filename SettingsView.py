@@ -41,8 +41,10 @@ class Settings(arcade.View):
                          align="center", width=350, height=30))
 
         instructions = ["Управление:",
+                        "F11 - Полноэкранный режим",
                         "A/D - Движение",
                         "W - Прыжок",
+                        "S - Быстрое падение"
                         "SPACE - Атака",
                         "ESC - Назад/Пауза",
                         "E - Взаимодействие"]
@@ -56,9 +58,6 @@ class Settings(arcade.View):
 
         self.back_button = UIFlatButton(text="НАЗАД", width=130, height=40)
         buttons_hbox.add(self.back_button)
-
-        self.apply_button = UIFlatButton(text="ПРИМЕНИТЬ", width=130, height=40)
-        buttons_hbox.add(self.apply_button)
 
         vbox.add(buttons_hbox)
 
@@ -90,12 +89,6 @@ class Settings(arcade.View):
                     self.window.show_view(self.back_view)
                 return
 
-        if self.apply_button and self.apply_button.rect:
-            rect = self.apply_button.rect
-            if rect.left <= x <= rect.right and rect.bottom <= y <= rect.top:
-                self.volume = self.volume_slider.value
-                return
-
     def on_mouse_release(self, x, y, button, modifiers):  # обработка отпускания мыши
         self.ui_manager.on_mouse_release(x, y, button, modifiers)
         self.dragging_slider = False
@@ -112,3 +105,5 @@ class Settings(arcade.View):
         if key == arcade.key.ESCAPE:
             if self.back_view:
                 self.window.show_view(self.back_view)
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)

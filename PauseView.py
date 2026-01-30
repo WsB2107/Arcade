@@ -63,3 +63,5 @@ class Pause(arcade.View):
         if key == arcade.key.ESCAPE:
             self.game_view.paused = False
             self.window.show_view(self.game_view)
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)

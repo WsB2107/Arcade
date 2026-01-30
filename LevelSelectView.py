@@ -185,3 +185,6 @@ class LevelSelect(arcade.View):
         if key == arcade.key.ESCAPE:
             if self.main_menu:
                 self.window.show_view(self.main_menu)
+
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)

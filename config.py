@@ -1,5 +1,7 @@
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+import tkinter as tk
+root = tk.Tk()
+SCREEN_WIDTH =  root.winfo_screenwidth()
+SCREEN_HEIGHT = root.winfo_screenheight()
 SCREEN_TITLE = "Dungeon Crushers"
 PLAYER_MOVE_SPEED = 7
 PLAYER_LADDER_SPEED = 4
@@ -11,3 +13,4 @@ JUMP_BUFFER = 0.12  # Если нажали прыжок чуть раньше �
 MAX_JUMPS = 1  # С двойным прыжком всё лучше, но не сегодня
 CAMERA_LERP = 0.12
 VOLUME = {"volume": 0.5}
+root.destroy()

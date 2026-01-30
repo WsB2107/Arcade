@@ -65,6 +65,8 @@ class VictoryView(arcade.View):
         if key == arcade.key.ESCAPE:
             from MainMenuView import MainMenu
             self.window.show_view(MainMenu())
+        if key == arcade.key.F11:
+            self.window.set_fullscreen(not self.window.fullscreen)
 
     def save_record(self):
 
