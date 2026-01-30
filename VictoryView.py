@@ -24,8 +24,13 @@ class VictoryView(arcade.View):
 
         vbox = UIBoxLayout(vertical=True, space_between=15)
 
-        vbox.add(UILabel(text=f"Уровень {self.level_number} пройден",font_size=28,
-            text_color=arcade.color.WHITE,width=400,height=35,align="center"))
+        if self.level_number == 4:
+            vbox.add(UILabel(text="Спасибо за игру!",font_size=28,
+                text_color=arcade.color.WHITE,width=400,height=35,align="center"))
+
+        else:
+            vbox.add(UILabel(text=f"""Уровень {self.level_number} пройден""", font_size=28,
+                             text_color=arcade.color.WHITE, width=400, height=35, align="center"))
 
         vbox.add(UILabel(text=f"Время: {time_str}",font_size=24,text_color=arcade.color.WHITE,
             width=400,height=30,align="center"))

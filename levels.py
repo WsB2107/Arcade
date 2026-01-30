@@ -18,6 +18,8 @@ class GameLevel(arcade.View):
         self.player = Player(start_x, start_y)
         self.enemies_list = arcade.SpriteList()
         self.heart_list = arcade.SpriteList()
+        self.boss_list = arcade.SpriteList()
+        self.super_list = arcade.SpriteList()
         self.all_sprites = arcade.SpriteList()
         self.all_sprites.append(self.player)
 
@@ -29,7 +31,9 @@ class GameLevel(arcade.View):
         # аудио для победы
         self.win = arcade.load_sound("sound/win.mp3")
 
+        # атаки игрока
         self.hero_attack = arcade.load_sound("sound/hero_attack.mp3")
+        self.hero_attack_super = arcade.load_sound("sound/hero_attack_super.wav")
 
         # коллизия
         self.platforms_list = None
@@ -75,6 +79,20 @@ class GameLevel(arcade.View):
             world_y = heart_point.shape[1]
             heart = Heart(world_x, world_y)
             self.heart_list.append(heart)
+
+    def spawn_boss(self):
+        for boss_point in self.tile_map.object_lists.get("boss", []):
+            world_x = boss_point.shape[0]
+            world_y = boss_point.shape[1]
+            boss = Boss(world_x, world_y, self.collision_list, self.platforms_list)
+            self.boss_list.append(boss)
+
+    def spawn_super(self):
+        for super_point in self.tile_map.object_lists.get("super", []):
+            world_x = super_point.shape[0]
+            world_y = super_point.shape[1]
+            super = SuperUp(world_x, world_y)
+            self.super_list.append(super)
 
     def on_update(self, delta_time):
 
@@ -129,6 +147,13 @@ class GameLevel(arcade.View):
             check = arcade.check_for_collision_with_list(self.player, self.enemies_list)
             enemy.update_enemy(self.player, check)
 
+        for boss in self.boss_list:
+            check = arcade.check_for_collision_with_list(self.player, self.boss_list)
+            if boss.hp > 0:
+                boss.update_boss(self.player, check)
+            else:
+                self.music_player.pause()
+
         self.update_combat()
 
         # уникальные ловушки для каждого уровня
@@ -145,6 +170,11 @@ class GameLevel(arcade.View):
             check = arcade.check_for_collision(self.player, heart)
             heart.update_heart(self.player, check)
 
+        # подбор супера
+        for power in self.super_list:
+            check = arcade.check_for_collision(self.player, power)
+            power.update_super(self.player, check)
+
         # камера
         target = (self.player.center_x, self.player.center_y)
         cx, cy = self.world_camera.position
@@ -155,6 +185,9 @@ class GameLevel(arcade.View):
 
         self.all_sprites.update_animation(delta_time)
         self.enemies_list.update_animation(delta_time)
+        for boss in self.boss_list:
+            if boss.hp > 0:
+                self.boss_list.update_animation(delta_time)
 
         world_w = 200000
         world_h = 200000
@@ -199,6 +232,8 @@ class GameLevel(arcade.View):
             if not self.player.is_attacking:
                 self.player.is_attacking = True
                 arcade.play_sound(self.hero_attack, VOLUME["volume"])
+                if self.player.power:
+                    arcade.play_sound(self.hero_attack_super, VOLUME["volume"])
 
                 # сбрасываем счетчик и список при каждом ударе
                 self.player.cur_texture = 0
@@ -239,6 +274,7 @@ class GameLevel(arcade.View):
 
         if self.player.is_attacking and frame in [2, 3]:
             hit_list = arcade.check_for_collision_with_list(self.player, self.enemies_list)
+            hit_boss_list = arcade.check_for_collision_with_list(self.player, self.boss_list)
 
             # враги которым еще не нанесли урон
             for enemy in hit_list:
@@ -251,6 +287,15 @@ class GameLevel(arcade.View):
 
                     # чтобы враг не получил больше 1 урона за тычку
                     self.player.already_hit.append(enemy)
+
+            for boss in hit_boss_list:
+                if boss not in self.player.already_hit:
+                    direction = 1 if self.player.direction_view == 0 else -1
+                    if self.player.power:
+                        boss.take_damage(direction, 999)
+                    else:
+                        boss.take_damage(direction)
+                    self.player.already_hit.append(boss)
 
     def draw_health_bar(self):
 
@@ -542,10 +587,11 @@ class Depths(GameLevel):
         # хп бар
         self.draw_health_bar()
 
+
 class BossFight(GameLevel):
     def __init__(self):
-        super().__init__(328, 1320, "level_4.tmx",
-                         (25,10, 10, 255), "sound/level4.mp3")
+        super().__init__(640, 550, "level_4.tmx",
+                         (25, 10, 10, 255), "sound/level4.mp3")
 
         # слои
         self.pedestal_list = self.tile_map.sprite_lists["pedestal"]
@@ -567,8 +613,10 @@ class BossFight(GameLevel):
             walls=self.collision_list,
             gravity_constant=GRAVITY
         )
-
+        self.spawn_boss()
+        self.spawn_super()
         self.level_number = 4
+
     def on_draw(self):
         self.clear()
 
@@ -590,7 +638,8 @@ class BossFight(GameLevel):
 
         # игрок, супер и босс
         self.all_sprites.draw()
-
+        self.boss_list.draw()
+        self.super_list.draw()
 
         if hasattr(self, 'timer_text'):
             self.timer_text.draw()
@@ -609,6 +658,9 @@ class Player(arcade.Sprite):
 
         # флаг атаки
         self.is_attacking = False
+
+        # флаг супер способностей
+        self.power = False
 
         # списки текстур
         self.idle_textures = []
@@ -700,9 +752,9 @@ class Player(arcade.Sprite):
         frame = int(self.cur_texture) % 8
         self.texture = self.idle_textures[frame][self.direction_view]
 
-    def take_damage(self):
+    def take_damage(self, count=1):
         if self.take_damage_timer <= 0:
-            self.hp -= 1
+            self.hp -= count
             self.take_damage_timer = 0.5
             arcade.play_sound(self.hero_hit, VOLUME["volume"])
 
@@ -896,9 +948,9 @@ class Enemy(arcade.Sprite):
 
         self.enemy_engine.update()
 
-    def take_damage(self, direction):
+    def take_damage(self, direction, count=1):
         arcade.play_sound(self.skeleton_hit, volume=VOLUME["volume"])
-        self.hp -= 1
+        self.hp -= count
 
         # эффект оглушения
         self.stun_timer = 0.5
@@ -927,6 +979,191 @@ class Enemy(arcade.Sprite):
         self.attack_timer = 0.5
 
 
+class Boss(arcade.Sprite):
+    def __init__(self, x, y, collision_list, platforms_list):
+        super().__init__(scale=2)
+
+        self.center_x = x
+        self.center_y = y
+
+        # текущая текстура и направление взгляда
+        self.cur_texture = 0
+        self.direction_view = 0
+
+        # флаг атаки
+        self.is_attacking = False
+
+        # текстуры
+        self.idle_textures = []
+        self.run_textures = []
+        self.attack_textures = []
+
+        # IDLE
+
+        texture = arcade.load_texture("textures/monsters/Skeleton/IDLE.png")
+        self.idle_textures.append([texture, texture.flip_left_right()])
+
+        # RUN
+        for i in range(4):
+            texture = arcade.load_texture(f"textures/monsters/Skeleton/walk{i + 1}.png")
+            self.run_textures.append([texture, texture.flip_left_right()])
+
+        #  ATTACK
+        for i in range(8):
+            texture = arcade.load_texture(f"textures/monsters/Skeleton/attack{i + 1}.png")
+            self.attack_textures.append([texture, texture.flip_left_right()])
+
+        # загрузка звук. эффектов
+        self.boss_attack = arcade.load_sound("sound/boss_attack.wav")
+        self.boss_hit = arcade.load_sound("sound/boss_hit.wav")
+        self.boss_death = arcade.load_sound("sound/boss_death.wav")
+        self.end_boss_fight = arcade.load_sound("sound/end_boss_fight.mp3")
+        self.end_boss = False
+
+        self.texture = self.idle_textures[0][0]
+
+        # движок для босса
+        self.enemy_engine = arcade.PhysicsEnginePlatformer(
+            self,
+            walls=collision_list,
+            platforms=platforms_list,
+            gravity_constant=GRAVITY
+        )
+
+        # характеристики босса
+        self.hp = 10
+        self.speed_patrol = ENEMY_MOVE_SPEED
+        self.speed_chase = ENEMY_MOVE_SPEED * 2
+        self.change_x = self.speed_patrol
+
+        # время до следующего удара
+        self.attack_timer = 0
+
+        # дистанция, при которой босс агрится
+        self.dist_to_agr = 100000
+        # дистанция удара
+        self.attack_dist = 60
+
+        # начальное состояние
+        self.state = "преследование"
+
+        # время оглушения
+        self.stun_timer = 0
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        if not self.idle_textures:
+            return
+
+        # красный цвет при получении урона
+        if self.stun_timer > 0:
+            self.color = arcade.color.RED
+        else:
+            self.color = arcade.color.WHITE
+
+        # направление взгляда, если не атакует
+        if not self.is_attacking:
+            if self.change_x < -0.1:
+                self.direction_view = 1
+            elif self.change_x > 0.1:
+                self.direction_view = 0
+
+        # если атака, то его сначала будет анимация атак
+        if self.is_attacking and self.attack_textures:
+            self.cur_texture += delta_time * 20
+            frame = int(self.cur_texture)
+
+            if frame < len(self.attack_textures):
+                self.texture = self.attack_textures[frame][self.direction_view]
+            else:
+
+                # атака закончилась
+                self.is_attacking = False
+                self.cur_texture = 0
+            return
+
+        # передвижение
+        if abs(self.change_x) > 0.1 and self.run_textures:
+            self.cur_texture += delta_time * 10
+            frame = int(self.cur_texture) % len(self.run_textures)
+            self.texture = self.run_textures[frame][self.direction_view]
+            return
+
+        # idle
+        self.texture = self.idle_textures[0][self.direction_view]
+
+    def update_boss(self, player, check):
+        distance = arcade.get_distance_between_sprites(self, player)
+        delta_time = 1 / 60
+
+        # если враг оглушен, то он не преследует игрока
+        if self.stun_timer > 0:
+            self.stun_timer -= delta_time
+            self.enemy_engine.update()
+            return
+
+        # если враг атакует, он стоит на месте
+        if self.is_attacking:
+            self.change_x = 0
+            self.enemy_engine.update()
+            return
+
+        #  обновление таймера атаки
+        if self.attack_timer > 0:
+            self.attack_timer -= delta_time
+
+        # когда враг атакует
+        if distance < self.attack_dist and self.attack_timer <= 0:
+            self.attack_player(player, check)
+
+        if self.state == "преследование":
+            if distance > self.attack_dist - 10:
+                if self.center_x < player.center_x:
+                    self.change_x = self.speed_chase
+                else:
+                    self.change_x = -self.speed_chase
+            else:
+
+                #  если подошли очень близко
+                self.change_x = 0
+
+        self.enemy_engine.update()
+
+    def take_damage(self, direction, count=1):
+        arcade.play_sound(self.boss_hit, volume=VOLUME["volume"])
+        self.hp -= count
+
+        # эффект оглушения
+        self.stun_timer = 0.1
+
+        # малое отбрасывание
+        self.change_x = direction
+        self.change_y = 1
+
+        if self.hp <= 0:
+            arcade.play_sound(self.boss_death, volume=VOLUME["volume"] * 0.75)
+
+            # победная музыка над боссом
+            if not self.end_boss:
+                arcade.play_sound(self.end_boss_fight, volume=VOLUME["volume"] * 0.5)
+                self.end_boss = True
+
+    def attack_player(self, player, check):
+
+        # босс атакует
+        if not self.is_attacking:
+            self.is_attacking = True
+            self.cur_texture = 0
+            self.change_x = 0
+            arcade.play_sound(self.boss_attack, volume=VOLUME["volume"])
+
+        if check:
+            player.take_damage(3)
+
+        # пауза между ударами
+        self.attack_timer = 0.5
+
+
+# сердечки восстанавливают хп
 class Heart(arcade.Sprite):
     def __init__(self, x, y):
         super().__init__("textures/heart.png", 1)
@@ -939,3 +1176,18 @@ class Heart(arcade.Sprite):
             player.heal()
             self.remove_from_sprite_lists()
             arcade.play_sound(self.health_up, volume=VOLUME["volume"])
+
+
+# супер способность для босс файта
+class SuperUp(arcade.Sprite):
+    def __init__(self, x, y):
+        super().__init__("textures/super.png", 2)
+        self.center_x = x
+        self.center_y = y
+        self.hero_super = arcade.load_sound("sound/hero_super.wav")
+
+    def update_super(self, player, check):
+        if check:
+            player.power = True
+            self.remove_from_sprite_lists()
+            arcade.play_sound(self.hero_super, volume=1)
