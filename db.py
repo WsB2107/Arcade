@@ -51,7 +51,8 @@ class Database:
                             (user_id, level_num))
         return self.cursor.fetchone()
 
-    def save_record(self, user_id, level_num, best_time):  # сохранение рекорда
+    def save_record(self, user_id, level_num, best_time):# сохранение рекорда
+        print(f"[БАЗА ДАННЫХ] Сохранение рекорда: user_id={user_id}, level={level_num}, time={best_time}")
 
         self.cursor.execute("SELECT best_time FROM records WHERE user_id = ? AND level_num = ?",
                             (user_id, level_num))
@@ -67,11 +68,18 @@ class Database:
         self.conn.commit()
         return True
 
-    def get_user_record(self, user_id, level_num):  # получение рекорда
-
+    def get_user_record(self, user_id, level_num):  # получение рекорда конкретного пользователя
         self.cursor.execute("SELECT * FROM records WHERE user_id = ? AND level_num = ?",
                             (user_id, level_num))
         return self.cursor.fetchone()
+
+    def get_top_records_for_level(self, level_num, limit=10):  # отдельный метод для лидерборда
+
+        self.cursor.execute("""SELECT r.user_id, u.username, r.best_time FROM records r
+                              JOIN users u ON r.user_id = u.id WHERE r.level_num = ?
+                              ORDER BY r.best_time ASC LIMIT ?""",
+                            (level_num, limit))
+        return self.cursor.fetchall()
 
     def unlock_level(self, user_id, level_num):
 

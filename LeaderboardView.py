@@ -84,7 +84,7 @@ class Leaderboard(arcade.View):
 
         records = self.get_real_records_for_level(level_num)
 
-        self.display_records(vbox, records, level_num)
+        self.display_records(vbox, records)
 
         vbox.add(UILabel(text="", width=300, height=20))
 
@@ -106,24 +106,18 @@ class Leaderboard(arcade.View):
 
         records = []
 
-        all_users = self.db.get_all_users()
+        db_records = self.db.get_top_records_for_level(level_num, limit=10)
 
-        for user_id, username in all_users:
-            db_record = self.db.get_user_record(user_id, level_num)
-            if db_record:
-                best_time = db_record[2]
-                is_current_user = self.user and self.user.is_logged_in and user_id == self.user.user_id
-                records.append({"user_id": user_id, "username": username, "time": best_time,
-                                "is_current_user": is_current_user})
-
-        records.sort(key=lambda x: x["time"])
-
-        for i, record in enumerate(records):
-            record["place"] = i + 1
+        for user_id, username, best_time in db_records:
+            records.append({
+                "user_id": user_id,
+                "username": username,
+                "time": best_time,
+                "is_current_user": self.user and self.user.is_logged_in and user_id == self.user.user_id})
 
         return records
 
-    def display_records(self, vbox, records, level_num):
+    def display_records(self, vbox, records):
 
         columns = UILabel(text="ИГРОК  |  ВРЕМЯ", font_size=22, text_color=arcade.color.LIGHT_GRAY,
                           align="center", width=500, height=35)
@@ -131,11 +125,9 @@ class Leaderboard(arcade.View):
 
         vbox.add(UILabel(text="", font_size=16, width=500, height=10))
 
-        real_records = sorted(records, key=lambda x: x["time"])[:10] if records else []
-
         for place in range(1, 11):
-            if place <= len(real_records):
-                record = real_records[place - 1]
+            if place <= len(records):
+                record = records[place - 1]
                 username = record.get("username", "Unknown")
                 time_sec = record.get("time", 0)
 

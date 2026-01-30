@@ -2,13 +2,16 @@ from config import *
 import arcade
 from pyglet.graphics import Batch
 from arcade import Camera2D
-
+from Timer import Timer
+from VictoryView import VictoryView
 
 # Общий родительский класс для всех уровней
 class GameLevel(arcade.View):
     def __init__(self, start_x, start_y, map_name, bg_color):
         super().__init__()
         arcade.set_background_color(bg_color)
+
+        self.timer = Timer(auto_start=True)
 
         # игрок и спрайтлисты
         self.player = Player(start_x, start_y)
@@ -52,8 +55,16 @@ class GameLevel(arcade.View):
             self.enemies_list.append(enemy)
 
     def on_update(self, delta_time):
+
         if self.paused:
+            if self.timer.is_running and not self.timer.is_paused:
+                self.timer.pause()
             return
+        else:
+            if self.timer.is_paused:
+                self.timer.resume()
+        if self.timer_text:
+            self.timer_text.text = f"Time: {self.timer.get_formatted_time()}"
 
         # движение игрока
         move = 0
@@ -190,6 +201,8 @@ class GameLevel(arcade.View):
             from PauseView import Pause
             self.pause_menu = Pause(self)
             self.window.show_view(self.pause_menu)
+        else:
+            self.timer.resume()
 
     def update_combat(self):
 
@@ -216,17 +229,23 @@ class GameLevel(arcade.View):
         self.window.show_view(game_view)
 
     def victory_view(self):
-        # self.unlock_next_level()
-        from VictoryView import VictoryView
-        victory = VictoryView()
-        self.window.show_view(victory)
 
-    # def unlock_next_level(self, user_id, completed_level):  # после прохождения уровня вызывается
+        finish_time = self.timer.stop()
+        victory_view = VictoryView(
+            level_number=getattr(self, 'level_number', 1),completion_time=finish_time,user=self.user)
+        self.window.show_view(victory_view)
 
-    #    next_level = completed_level + 1
-    #   if next_level <= 4:
-    #      return self.unlock_level(user_id, next_level)
-    # return False
+
+    def on_show_view(self):
+
+            self.timer_text = arcade.Text(text="Time: 00:00",x=10,y=self.window.height - 30,
+                                          color=arcade.color.WHITE,font_size=20)
+            if not self.timer.is_running:
+                self.timer.start()
+            else:
+                if self.timer.is_paused:
+                    self.timer.resume()
+
 
 
 # уровень 1 - Шахты
@@ -263,6 +282,7 @@ class Mines(GameLevel):
             platforms=self.platforms_list,
             gravity_constant=GRAVITY
         )
+        self.level_number = 1
 
     def on_draw(self):
         self.clear()
@@ -294,6 +314,8 @@ class Mines(GameLevel):
 
         # GUI
         self.gui_camera.use()
+        if hasattr(self, 'timer_text'):
+            self.timer_text.draw()
         self.batch.draw()
 
 
@@ -329,6 +351,7 @@ class Catacombs(GameLevel):
             platforms=self.platforms_list,
             gravity_constant=GRAVITY
         )
+        self.level_number = 2
 
     def traps(self):
         # шипы на уровне
@@ -363,6 +386,8 @@ class Catacombs(GameLevel):
 
         # GUI
         self.gui_camera.use()
+        if hasattr(self, 'timer_text'):
+            self.timer_text.draw()
         self.batch.draw()
 
 
@@ -395,6 +420,7 @@ class Depths(GameLevel):
             gravity_constant=GRAVITY,
             ladders=self.ladder_list
         )
+        self.level_number = 3
 
     def traps(self):
         # раскаленная магма
@@ -423,6 +449,8 @@ class Depths(GameLevel):
 
         # GUI
         self.gui_camera.use()
+        if hasattr(self, 'timer_text'):
+            self.timer_text.draw()
         self.batch.draw()
 
 
