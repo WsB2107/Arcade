@@ -59,7 +59,7 @@ class GameLevel(arcade.View):
         # музыка на фоне уровня
         self.music_player = arcade.play_sound(
             arcade.load_sound(music),
-            volume=VOLUME["volume"] * 0.7)
+            volume=VOLUME["volume"] * 0.5)
 
     def spawn_enemies(self):
         #  координаты врагов
@@ -486,7 +486,7 @@ class Depths(GameLevel):
         self.ladder_list = self.tile_map.sprite_lists["ladder"]
         self.collision_list = self.tile_map.sprite_lists["collision"]
 
-        # враги
+        # враги и сердца
         self.spawn_enemies()
         self.spawn_hearts()
 
@@ -501,6 +501,7 @@ class Depths(GameLevel):
         self.level_number = 3
 
     def traps(self):
+
         # раскаленная магма
         if arcade.check_for_collision_with_list(self.player, self.magma_list):
             self.player.take_damage()
@@ -534,6 +535,63 @@ class Depths(GameLevel):
 
         # GUI
         self.gui_camera.use()
+        if hasattr(self, 'timer_text'):
+            self.timer_text.draw()
+        self.batch.draw()
+
+        # хп бар
+        self.draw_health_bar()
+
+class BossFight(GameLevel):
+    def __init__(self):
+        super().__init__(328, 1320, "level_4.tmx",
+                         (25,10, 10, 255), "sound/level4.mp3")
+
+        # слои
+        self.pedestal_list = self.tile_map.sprite_lists["pedestal"]
+        self.stone_list = self.tile_map.sprite_lists["stone"]
+        self.dekor_list = self.tile_map.sprite_lists["dekor"]
+        self.dekor2_list = self.tile_map.sprite_lists["dekor2"]
+        self.backgr_list = self.tile_map.sprite_lists["backgr"]
+
+        # коллизия
+        self.door_list = self.tile_map.sprite_lists["door"]
+        self.collision_list = self.tile_map.sprite_lists["collision"]
+
+        # задний фон
+        self.texture = arcade.load_texture('textures/boss_fight_backgr.jpg')
+
+        # движок
+        self.engine = arcade.PhysicsEnginePlatformer(
+            self.player,
+            walls=self.collision_list,
+            gravity_constant=GRAVITY
+        )
+
+        self.level_number = 4
+    def on_draw(self):
+        self.clear()
+
+        # фон
+        arcade.draw_texture_rect(self.texture,
+                                 arcade.rect.XYWH(self.window.width // 2,
+                                                  self.window.height // 2,
+                                                  self.window.width,
+                                                  self.window.height))
+
+        # основные слои
+        self.pedestal_list.draw()
+        self.stone_list.draw()
+        self.dekor_list.draw()
+        self.dekor2_list.draw()
+        self.backgr_list.draw()
+        self.door_list.draw()
+        self.collision_list.draw()
+
+        # игрок, супер и босс
+        self.all_sprites.draw()
+
+
         if hasattr(self, 'timer_text'):
             self.timer_text.draw()
         self.batch.draw()
@@ -866,7 +924,7 @@ class Enemy(arcade.Sprite):
             player.take_damage()
 
         # пауза между ударами
-        self.attack_timer = 2.0
+        self.attack_timer = 0.5
 
 
 class Heart(arcade.Sprite):
