@@ -255,7 +255,7 @@ class GameLevel(arcade.View):
     def draw_health_bar(self):
 
         icon_size = 48
-        icon_left = 0
+        icon_left = 200
         icon_bottom = SCREEN_HEIGHT - icon_size
 
         # прямоугольник для иконки
