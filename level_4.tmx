@@ -4,11 +4,11 @@
  <tileset firstgid="82" source="assets/textures.tsx"/>
  <tileset firstgid="190" source="assets/TerrainPalm (32x32).tsx"/>
  <tileset firstgid="530" source="assets/light.tsx"/>
- <tileset firstgid="566" source="../Arcade34/assets/throne.tsx"/>
- <tileset firstgid="735" source="../Arcade34/assets/blue_diamond.tsx"/>
- <tileset firstgid="736" source="../Arcade34/assets/red_diamond.tsx"/>
+ <tileset firstgid="566" source="assets/throne.tsx"/>
+ <tileset firstgid="735" source="assets/blue_diamond.tsx"/>
+ <tileset firstgid="736" source="assets/red_diamond.tsx"/>
  <tileset firstgid="737" source="assets/money_bag.tsx"/>
- <tileset firstgid="801" source="../Arcade34/assets/goldskull.tsx"/>
+ <tileset firstgid="801" source="assets/goldskull.tsx"/>
  <tileset firstgid="802" source="assets/skull1.tsx"/>
  <layer id="8" name="pedestal" width="120" height="70">
   <data encoding="base64" compression="zlib">
