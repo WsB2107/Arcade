@@ -6,7 +6,7 @@ class Pause(arcade.View):
     def __init__(self, game_view):
         super().__init__()
         self.game_view = game_view
-        self.ui_manager = UIManager()
+        self.ui_manager = UIManager(self.window)
 
         self.create_ui()
 
@@ -23,17 +23,30 @@ class Pause(arcade.View):
         vbox.add(UILabel(text="", width=300, height=20))
 
         self.resume_button = UIFlatButton(text="ПРОДОЛЖИТЬ (ESC)", width=280, height=50)
+        self.resume_button.on_click = self.resume_game
         vbox.add(self.resume_button)
 
         anchor = UIAnchorLayout()
         anchor.add(child=vbox, anchor_x="center", anchor_y="center")
         self.ui_manager.add(anchor)
 
-    def on_show(self):
+    def resume_game(self, event=None):
 
+        self.game_view.paused = False
+        if self.game_view.timer.is_paused:
+            self.game_view.timer.resume()
+        self.window.show_view(self.game_view)
+
+    def on_show_view(self):
         self.ui_manager.enable()
 
-    def on_hide(self):
+        if not self.game_view.paused:
+            self.game_view.paused = True
+
+        if not self.game_view.timer.is_paused:
+            self.game_view.timer.pause()
+
+    def on_hide_view(self):
 
         self.ui_manager.disable()
 
@@ -47,21 +60,15 @@ class Pause(arcade.View):
 
         self.ui_manager.on_mouse_press(x, y, button, modifiers)
 
-        if self.resume_button.rect:
-            rect = self.resume_button.rect
-            if rect.left <= x <= rect.right and rect.bottom <= y <= rect.top:
-                self.game_view.paused = False
-                self.window.show_view(self.game_view)
-                return
-
     def on_mouse_motion(self, x, y, dx, dy):
 
         self.ui_manager.on_mouse_motion(x, y, dx, dy)
 
     def on_key_press(self, key, modifiers):
-
         if key == arcade.key.ESCAPE:
-            self.game_view.paused = False
-            self.window.show_view(self.game_view)
+            self.resume_game()
+            return True
         if key == arcade.key.F11:
             self.window.set_fullscreen(not self.window.fullscreen)
+            return True
+        return False

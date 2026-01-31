@@ -4,7 +4,7 @@ from pyglet.graphics import Batch
 from arcade import Camera2D
 from Timer import Timer
 from VictoryView import VictoryView
-
+from PauseView import Pause
 
 # Общий родительский класс для всех уровней
 class GameLevel(arcade.View):
@@ -12,7 +12,7 @@ class GameLevel(arcade.View):
         super().__init__()
         arcade.set_background_color(bg_color)
 
-        self.timer = Timer(auto_start=True)
+        self.timer = Timer(auto_start=False)
 
         # игрок и спрайтлисты
         self.player = Player(start_x, start_y)
@@ -58,7 +58,6 @@ class GameLevel(arcade.View):
         self.engine = None
 
         self.paused = False
-        self.pause_menu = None
 
         # музыка на фоне уровня
         self.music_player = arcade.play_sound(
@@ -97,12 +96,8 @@ class GameLevel(arcade.View):
     def on_update(self, delta_time):
 
         if self.paused:
-            if self.timer.is_running and not self.timer.is_paused:
-                self.timer.pause()
             return
-        else:
-            if self.timer.is_paused:
-                self.timer.resume()
+
         if self.timer_text:
             self.timer_text.text = f"Time: {self.timer.get_formatted_time()}"
 
@@ -207,6 +202,14 @@ class GameLevel(arcade.View):
         pass
 
     def on_key_press(self, key, modifiers):
+        if not self.timer.is_running and key in [arcade.key.W, arcade.key.A, arcade.key.S, arcade.key.D,
+                                                 arcade.key.SPACE, arcade.key.E]:
+            self.timer.start()
+
+        if key == arcade.key.ESCAPE:
+            self.toggle_pause()
+            return
+
         if key == arcade.key.W:
             self.up = True
             self.jump_pressed = True
@@ -221,10 +224,6 @@ class GameLevel(arcade.View):
         # чтобы падать быстрее
         elif key == arcade.key.S:
             self.down = True
-
-        if key == arcade.key.ESCAPE:
-            self.toggle_pause()
-            return
 
         if key == arcade.key.F11:
             self.window.set_fullscreen(not self.window.fullscreen)
@@ -260,13 +259,14 @@ class GameLevel(arcade.View):
     def toggle_pause(self):
 
         self.paused = not self.paused
-
         if self.paused:
-            from PauseView import Pause
-            self.pause_menu = Pause(self)
-            self.window.show_view(self.pause_menu)
+            self.timer.pause()
         else:
             self.timer.resume()
+
+        if self.paused:
+            pause_view = Pause(self)
+            self.window.show_view(pause_view)
 
     def update_combat(self):
 
@@ -342,14 +342,11 @@ class GameLevel(arcade.View):
         arcade.set_background_color(arcade.color.BLACK)
 
     def on_show_view(self):
-
-        self.timer_text = arcade.Text(text="Time: 00:00", x=10, y=self.window.height - 30,
-                                      color=arcade.color.WHITE, font_size=20)
+        if not hasattr(self, 'timer_text'):
+            self.timer_text = arcade.Text(text="Time: 00:00", x=10, y=self.window.height - 30,
+                                          color=arcade.color.WHITE, font_size=20)
         if not self.timer.is_running:
             self.timer.start()
-        else:
-            if self.timer.is_paused:
-                self.timer.resume()
 
 
 # уровень 1 - Шахты
