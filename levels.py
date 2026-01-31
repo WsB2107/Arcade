@@ -153,6 +153,7 @@ class GameLevel(arcade.View):
                 boss.update_boss(self.player, check)
             else:
                 self.music_player.pause()
+                boss.texture = arcade.load_texture("textures/monsters/boss/Boss_IDLE.png")
 
         self.update_combat()
 
@@ -1000,17 +1001,17 @@ class Boss(arcade.Sprite):
 
         # IDLE
 
-        texture = arcade.load_texture("textures/monsters/Skeleton/IDLE.png")
+        texture = arcade.load_texture("textures/monsters/boss/Boss_IDLE.png")
         self.idle_textures.append([texture, texture.flip_left_right()])
 
         # RUN
-        for i in range(4):
-            texture = arcade.load_texture(f"textures/monsters/Skeleton/walk{i + 1}.png")
+        for i in range(6):
+            texture = arcade.load_texture(f"textures/monsters/boss/Boss_Run{i + 1}.png")
             self.run_textures.append([texture, texture.flip_left_right()])
 
         #  ATTACK
-        for i in range(8):
-            texture = arcade.load_texture(f"textures/monsters/Skeleton/attack{i + 1}.png")
+        for i in range(4):
+            texture = arcade.load_texture(f"textures/monsters/boss/Boss_Attack{i + 1}.png")
             self.attack_textures.append([texture, texture.flip_left_right()])
 
         # загрузка звук. эффектов
@@ -1032,9 +1033,8 @@ class Boss(arcade.Sprite):
 
         # характеристики босса
         self.hp = 10
-        self.speed_patrol = ENEMY_MOVE_SPEED
-        self.speed_chase = ENEMY_MOVE_SPEED * 2
-        self.change_x = self.speed_patrol
+        self.speed_chase = ENEMY_MOVE_SPEED
+        self.change_x = self.speed_chase
 
         # время до следующего удара
         self.attack_timer = 0
@@ -1042,7 +1042,7 @@ class Boss(arcade.Sprite):
         # дистанция, при которой босс агрится
         self.dist_to_agr = 100000
         # дистанция удара
-        self.attack_dist = 60
+        self.attack_dist = 150
 
         # начальное состояние
         self.state = "преследование"
@@ -1069,7 +1069,7 @@ class Boss(arcade.Sprite):
 
         # если атака, то его сначала будет анимация атак
         if self.is_attacking and self.attack_textures:
-            self.cur_texture += delta_time * 20
+            self.cur_texture += delta_time *10
             frame = int(self.cur_texture)
 
             if frame < len(self.attack_textures):
@@ -1083,7 +1083,7 @@ class Boss(arcade.Sprite):
 
         # передвижение
         if abs(self.change_x) > 0.1 and self.run_textures:
-            self.cur_texture += delta_time * 10
+            self.cur_texture += delta_time * 8
             frame = int(self.cur_texture) % len(self.run_textures)
             self.texture = self.run_textures[frame][self.direction_view]
             return
@@ -1156,8 +1156,9 @@ class Boss(arcade.Sprite):
             self.change_x = 0
             arcade.play_sound(self.boss_attack, volume=VOLUME["volume"])
 
+
         if check:
-            player.take_damage(3)
+            player.take_damage(2)
 
         # пауза между ударами
         self.attack_timer = 0.5

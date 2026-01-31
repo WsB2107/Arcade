@@ -41,6 +41,7 @@ class VictoryView(arcade.View):
         menu_btn.on_click = self.on_menu
         vbox.add(menu_btn)
 
+
         anchor = UIAnchorLayout()
         anchor.add(child=vbox, anchor_x="center", anchor_y="center")
         self.ui_manager.add(anchor)
