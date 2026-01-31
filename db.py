@@ -52,7 +52,6 @@ class Database:
         return self.cursor.fetchone()
 
     def save_record(self, user_id, level_num, best_time):  # сохранение рекорда
-        print(f"[БАЗА ДАННЫХ] Сохранение рекорда: user_id={user_id}, level={level_num}, time={best_time}")
 
         self.cursor.execute("SELECT best_time FROM records WHERE user_id = ? AND level_num = ?",
                             (user_id, level_num))

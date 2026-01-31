@@ -94,6 +94,10 @@ class LevelSelect(arcade.View):
 
     def on_show(self):
 
+        self.db = Database()
+        self.user_id = self.db.get_user_id(self.user.username) if self.user else None
+        self.unlocked_levels = self.get_unlocked_levels()
+        self.create_ui()
         self.ui_manager.enable()
 
     def on_hide(self):
@@ -132,14 +136,14 @@ class LevelSelect(arcade.View):
             rect = self.level3_button.rect
             if rect.left <= x <= rect.right and rect.bottom <= y <= rect.top:
                 if not self.level3_button.disabled:
-                    self.start_level("???")
+                    self.start_level("depths")
                 return
 
         if self.level4_button.rect:
             rect = self.level4_button.rect
             if rect.left <= x <= rect.right and rect.bottom <= y <= rect.top:
                 if not self.level4_button.disabled:
-                    self.start_level("???")
+                    self.start_level("boss")
                 return
 
         if self.back_button.rect:
@@ -159,18 +163,16 @@ class LevelSelect(arcade.View):
 
         level_num = 1
         if level_name == "mines":
-            self.window.set_fullscreen()
-            game_view = Mines()
+            game_view = Mines(user=self.user, main_menu=self.main_menu)
             level_num = 1
         elif level_name == "catacombs":
-            self.window.set_fullscreen()
-            game_view = Catacombs()
+            game_view = Catacombs(user=self.user, main_menu=self.main_menu)
             level_num = 2
-        elif level_name == "???":
-            self.window.set_fullscreen()
+        elif level_name == "depths":
+            game_view = Depths(user=self.user, main_menu=self.main_menu)
             level_num = 3
-        elif level_name == "???":
-            self.window.set_fullscreen()
+        elif level_name == "boss":
+            game_view = BossFight(user=self.user, main_menu=self.main_menu)
             level_num = 4
 
         self.window.set_fullscreen(True)

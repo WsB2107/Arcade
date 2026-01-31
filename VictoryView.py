@@ -3,7 +3,7 @@ from arcade.gui import UIManager, UIBoxLayout, UILabel, UIFlatButton, UIAnchorLa
 
 
 class VictoryView(arcade.View):
-    def __init__(self, level_number=1, completion_time=0.0, user=None):
+    def __init__(self, level_number=1, completion_time=0.0, user=None, main_menu=None):
         super().__init__()
         self.level_number = level_number
         self.completion_time = completion_time
@@ -13,6 +13,7 @@ class VictoryView(arcade.View):
         self.create_ui()
         self.background_texture = arcade.load_texture("textures/VictoryView.jpg")
         self.user = user
+        self.main_menu = main_menu
 
     def create_ui(self):
 
@@ -46,7 +47,6 @@ class VictoryView(arcade.View):
         self.ui_manager.add(anchor)
 
     def on_show_view(self):
-
         self.ui_manager.enable()
         self.save_record()
 
@@ -84,6 +84,11 @@ class VictoryView(arcade.View):
             db.close()
 
     def on_menu(self, event=None):
-        from MainMenuView import MainMenu
-        menu_view = MainMenu()
-        self.window.show_view(menu_view)
+        if self.main_menu:
+            self.window.show_view(self.main_menu)
+        else:
+            from MainMenuView import MainMenu
+            menu_view = MainMenu()
+            if hasattr(self, 'user'):
+                menu_view.user = self.user
+            self.window.show_view(menu_view)

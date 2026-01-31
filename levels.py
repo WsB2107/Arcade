@@ -8,11 +8,14 @@ from PauseView import Pause
 
 # Общий родительский класс для всех уровней
 class GameLevel(arcade.View):
-    def __init__(self, start_x, start_y, map_name, bg_color, music):
+    def __init__(self, start_x, start_y, map_name, bg_color, music, user=None, main_menu=None):
         super().__init__()
         arcade.set_background_color(bg_color)
 
         self.timer = Timer(auto_start=False)
+        self.user = user
+        self.main_menu = main_menu
+        self.level_num = 1
 
         # игрок и спрайтлисты
         self.player = Player(start_x, start_y)
@@ -351,10 +354,10 @@ class GameLevel(arcade.View):
 
 # уровень 1 - Шахты
 class Mines(GameLevel):
-    def __init__(self):
+    def __init__(self, user=None, main_menu=None):
         # инициализация
         super().__init__(480, 2240, "level_1.tmx",
-                         arcade.color.BLUE_YONDER, "sound/level1.mp3")
+                         arcade.color.BLUE_YONDER, "sound/level1.mp3",user=user, main_menu=main_menu)
 
         # слои
         self.sky_list = self.tile_map.sprite_lists["sky"]
@@ -428,10 +431,10 @@ class Mines(GameLevel):
 
 # уровень 2 - Катакомбы
 class Catacombs(GameLevel):
-    def __init__(self):
+    def __init__(self, user=None, main_menu=None):
         # инициализация
         super().__init__(128, 2800, "level_2.tmx",
-                         arcade.color.EERIE_BLACK, "sound/level2.mp3")
+                         arcade.color.EERIE_BLACK, "sound/level2.mp3",user=user, main_menu=main_menu)
 
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
@@ -508,10 +511,10 @@ class Catacombs(GameLevel):
 
 # уровень 3 - Глубины
 class Depths(GameLevel):
-    def __init__(self):
+    def __init__(self, user=None, main_menu=None):
         # инициализация
         super().__init__(128, 2570, "level_3.tmx",
-                         (27, 10, 10, 255), "sound/level3.mp3")
+                         (27, 10, 10, 255), "sound/level3.mp3",user=user, main_menu=main_menu)
 
         # слои
         self.backgr_list = self.tile_map.sprite_lists["backgr"]
@@ -587,9 +590,9 @@ class Depths(GameLevel):
 
 
 class BossFight(GameLevel):
-    def __init__(self):
+    def __init__(self, user=None, main_menu=None):
         super().__init__(640, 550, "level_4.tmx",
-                         (25, 10, 10, 255), "sound/level4.mp3")
+                         (25, 10, 10, 255), "sound/level4.mp3",user=user, main_menu=main_menu)
 
         # слои
         self.pedestal_list = self.tile_map.sprite_lists["pedestal"]
