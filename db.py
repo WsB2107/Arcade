@@ -51,7 +51,7 @@ class Database:
                             (user_id, level_num))
         return self.cursor.fetchone()
 
-    def save_record(self, user_id, level_num, best_time):# сохранение рекорда
+    def save_record(self, user_id, level_num, best_time):  # сохранение рекорда
         print(f"[БАЗА ДАННЫХ] Сохранение рекорда: user_id={user_id}, level={level_num}, time={best_time}")
 
         self.cursor.execute("SELECT best_time FROM records WHERE user_id = ? AND level_num = ?",
@@ -83,25 +83,25 @@ class Database:
 
     def unlock_level(self, user_id, level_num):
 
-       self.cursor.execute("INSERT OR IGNORE INTO unlocked_levels (user_id, level_num) VALUES (?, ?)",
-                (user_id, level_num))
-       self.conn.commit()
-       return True
+        self.cursor.execute("INSERT OR IGNORE INTO unlocked_levels (user_id, level_num) VALUES (?, ?)",
+                            (user_id, level_num))
+        self.conn.commit()
+        return True
 
     def is_level_unlocked(self, user_id, level_num):
 
         self.cursor.execute("SELECT 1 FROM unlocked_levels WHERE user_id = ? AND level_num = ?",
-            (user_id, level_num))
+                            (user_id, level_num))
         return self.cursor.fetchone() is not None
 
     def get_unlocked_levels(self, user_id):
 
         self.cursor.execute("SELECT level_num FROM unlocked_levels WHERE user_id = ? ORDER BY level_num",
-            (user_id,))
+                            (user_id,))
         result = self.cursor.fetchall()
         return [level[0] for level in result]
 
-    def unlock_next_level(self, user_id, completed_level):#после прохождения уровня вызывается
+    def unlock_next_level(self, user_id, completed_level):  # после прохождения уровня вызывается
 
         next_level = completed_level + 1
         if next_level <= 4:

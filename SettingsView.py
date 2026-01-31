@@ -1,6 +1,7 @@
 import arcade
 from arcade.gui import UIManager, UIAnchorLayout, UIBoxLayout, UILabel, UIFlatButton, UISlider
 from arcade.uicolor import WHITE
+
 from config import *
 
 
@@ -97,7 +98,7 @@ class Settings(arcade.View):
         self.ui_manager.on_mouse_motion(x, y, dx, dy)
         if self.volume != self.volume_slider.value:
             self.volume = self.volume_slider.value
-            VOLUME["volume"]= self.volume
+            VOLUME["volume"] = self.volume
 
             self.volume_label.text = f"Громкость: {int(self.volume * 100)}%"
 

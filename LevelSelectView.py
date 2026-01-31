@@ -2,6 +2,7 @@ from levels import *
 from arcade.gui import UIManager, UIAnchorLayout, UIBoxLayout, UILabel, UIFlatButton
 from db import Database
 
+
 class LevelSelect(arcade.View):
     def __init__(self, main_menu=None, user=None):
         super().__init__()

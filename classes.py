@@ -2,7 +2,6 @@ from config import *
 import arcade
 
 
-
 class Player(arcade.Sprite):
     def __init__(self, x, y):
         super().__init__(scale=0.5)
@@ -422,7 +421,7 @@ class Boss(arcade.Sprite):
 
         # если атака, то его сначала будет анимация атак
         if self.is_attacking and self.attack_textures:
-            self.cur_texture += delta_time *10
+            self.cur_texture += delta_time * 10
             frame = int(self.cur_texture)
 
             if frame < len(self.attack_textures):
@@ -508,7 +507,6 @@ class Boss(arcade.Sprite):
             self.cur_texture = 0
             self.change_x = 0
             arcade.play_sound(self.boss_attack, volume=VOLUME["volume"])
-
 
         if check:
             player.take_damage(2)

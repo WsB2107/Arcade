@@ -1,6 +1,7 @@
 import tkinter as tk
+
 root = tk.Tk()
-SCREEN_WIDTH =  root.winfo_screenwidth()
+SCREEN_WIDTH = root.winfo_screenwidth()
 SCREEN_HEIGHT = root.winfo_screenheight()
 SCREEN_TITLE = "Dungeon Crushers"
 PLAYER_MOVE_SPEED = 7

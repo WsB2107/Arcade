@@ -648,5 +648,3 @@ class BossFight(GameLevel):
 
         # хп бар
         self.draw_health_bar()
-
-

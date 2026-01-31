@@ -3,7 +3,7 @@ from arcade.gui import UIManager, UIBoxLayout, UILabel, UIFlatButton, UIAnchorLa
 
 
 class VictoryView(arcade.View):
-    def __init__(self, level_number=1, completion_time=0.0,user=None):
+    def __init__(self, level_number=1, completion_time=0.0, user=None):
         super().__init__()
         self.level_number = level_number
         self.completion_time = completion_time
@@ -25,22 +25,21 @@ class VictoryView(arcade.View):
         vbox = UIBoxLayout(vertical=True, space_between=15)
 
         if self.level_number == 4:
-            vbox.add(UILabel(text="Спасибо за игру!",font_size=28,
-                text_color=arcade.color.WHITE,width=400,height=35,align="center"))
+            vbox.add(UILabel(text="Спасибо за игру!", font_size=28,
+                             text_color=arcade.color.WHITE, width=400, height=35, align="center"))
 
         else:
             vbox.add(UILabel(text=f"""Уровень {self.level_number} пройден""", font_size=28,
                              text_color=arcade.color.WHITE, width=400, height=35, align="center"))
 
-        vbox.add(UILabel(text=f"Время: {time_str}",font_size=24,text_color=arcade.color.WHITE,
-            width=400,height=30,align="center"))
+        vbox.add(UILabel(text=f"Время: {time_str}", font_size=24, text_color=arcade.color.WHITE,
+                         width=400, height=30, align="center"))
 
         vbox.add(UILabel(text="", width=400, height=30))
 
         menu_btn = UIFlatButton(text="В ГЛАВНОЕ МЕНЮ", width=280, height=50)
         menu_btn.on_click = self.on_menu
         vbox.add(menu_btn)
-
 
         anchor = UIAnchorLayout()
         anchor.add(child=vbox, anchor_x="center", anchor_y="center")
@@ -60,9 +59,9 @@ class VictoryView(arcade.View):
         self.clear()
 
         arcade.draw_texture_rect(self.background_texture, arcade.rect.XYWH(self.window.width // 2,
-                                                                               self.window.height // 2,
-                                                                               self.window.width,
-                                                                               self.window.height))
+                                                                           self.window.height // 2,
+                                                                           self.window.width,
+                                                                           self.window.height))
 
         self.ui_manager.draw()
 
@@ -84,8 +83,7 @@ class VictoryView(arcade.View):
             db.unlock_next_level(self.user.user_id, self.level_number)
             db.close()
 
-
-    def on_menu(self,event=None):
+    def on_menu(self, event=None):
         from MainMenuView import MainMenu
         menu_view = MainMenu()
         self.window.show_view(menu_view)
