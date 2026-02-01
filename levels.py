@@ -638,8 +638,9 @@ class BossFight(GameLevel):
         self.collision_list.draw()
 
         # игрок, супер и босс
-        self.all_sprites.draw()
         self.boss_list.draw()
+        self.all_sprites.draw()
+
         self.super_list.draw()
 
         if hasattr(self, 'timer_text'):
