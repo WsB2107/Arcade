@@ -11,7 +11,7 @@ class Settings(arcade.View):
         self.back_view = back_view
         self.ui_manager = UIManager()
         self.background_texture = arcade.load_texture('textures/main_menu.png')
-
+        self.sound = arcade.load_sound('sound/health_up.wav')
         self.volume = VOLUME["volume"]
         self.dragging_slider = False
 
@@ -99,7 +99,7 @@ class Settings(arcade.View):
         if self.volume != self.volume_slider.value:
             self.volume = self.volume_slider.value
             VOLUME["volume"] = self.volume
-
+            arcade.play_sound(self.sound, volume=VOLUME["volume"])
             self.volume_label.text = f"Громкость: {int(self.volume * 100)}%"
 
     def on_key_press(self, key, modifiers):  # обработка нажатия клавиш
